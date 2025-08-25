@@ -60,10 +60,6 @@ def add_data(data: Data):
     # Call scraper
     scraped_data = scrape_website(data.url)
 
-    # Force save as array
-    if not isinstance(scraped_data, list):
-        scraped_data = [scraped_data]
-
     scraperdb_collection.update_one(
         {"_id": ObjectId(inserted_id)},
         {"$set": {"scrapedData": scraped_data}}
