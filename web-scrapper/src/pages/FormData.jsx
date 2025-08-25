@@ -5,6 +5,7 @@ const FormData = ({ onSuccess }) => {
   const [url, setUrl] = useState("");
   const [selectedOptions, setSelectedOptions] = useState([]);
   const [description, setDescription] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleOptionChange = (option) => {
     setSelectedOptions((prev) =>
@@ -14,32 +15,33 @@ const FormData = ({ onSuccess }) => {
     );
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true); // start loading
 
-  const formData = {
-    url,
-    selectedOptions: Array.isArray(selectedOptions) ? selectedOptions : [selectedOptions],
-    description,
+    const formData = {
+      url,
+      selectedOptions: Array.isArray(selectedOptions)
+        ? selectedOptions
+        : [selectedOptions],
+      description,
+    };
+
+    try {
+      await api.post("/data", formData);
+      console.log("Form submitted:", formData);
+
+      setUrl("");
+      setSelectedOptions([]);
+      setDescription("");
+
+      if (onSuccess) onSuccess();
+    } catch (error) {
+      console.error("Error adding data", error.response?.data || error.message);
+    } finally {
+      setIsLoading(false); // stop loading
+    }
   };
-
-  try {
-    await api.post("/data", formData);
-    console.log("Form submitted:", formData);
-
-    setUrl("");
-    setSelectedOptions([]);
-    setDescription("");
-
-    if (onSuccess) onSuccess();
-  } catch (error) {
-    console.error("Error adding data", error.response?.data || error.message);
-  }
-};
-
-
-
-
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
@@ -65,12 +67,12 @@ const handleSubmit = async (e) => {
           </div>
 
           {/* Selection Options */}
-          <div>
+          {/* <div>
             <label className="block text-gray-700 text-sm font-medium mb-2">
               Data Type to Scrape
             </label>
             <div className="grid grid-cols-2 gap-3">
-              {["Text", "Images", "Links", "Metadata"].map((option) => (
+              {["Numbers", "Images", "Links", "Persons"].map((option) => (
                 <label
                   key={option}
                   className="flex items-center space-x-2 border rounded-lg p-3 hover:bg-gray-50 cursor-pointer"
@@ -85,10 +87,10 @@ const handleSubmit = async (e) => {
                 </label>
               ))}
             </div>
-          </div>
+          </div> */}
 
           {/* Description */}
-          <div>
+          {/* <div>
             <label className="block text-gray-700 text-sm font-medium mb-2">
               Description
             </label>
@@ -99,14 +101,19 @@ const handleSubmit = async (e) => {
               placeholder="Describe your scraping needs..."
               className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none resize-none"
             />
-          </div>
+          </div> */}
 
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl shadow-md transition-all duration-300"
+            disabled={isLoading} // disable while scraping
+            className={`w-full font-medium py-3 rounded-xl shadow-md transition-all duration-300 ${
+              isLoading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-indigo-600 hover:bg-indigo-700 text-white"
+            }`}
           >
-            Start Scraping
+            {isLoading ? "Scraping..." : "Start Scraping"}
           </button>
         </form>
       </div>
