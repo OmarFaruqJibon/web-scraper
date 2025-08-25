@@ -8,9 +8,6 @@ const Homepage = () => {
   const fetchData = async () => {
     try {
       const response = await api.get("/data");
-      console.log("Fetched:", response.data);
-
-      // Access the array correctly
       setData(response.data.dataCollections);
     } catch (error) {
       console.error("Error fetching data", error);
@@ -22,71 +19,148 @@ const Homepage = () => {
   }, []);
 
   console.log(data);
+
   return (
-    <div>
-      {/* Pass fetchData to refresh list after form submit */}
+    <div className="min-h-screen bg-gray-50 text-gray-800 p-6">
+      {/* Form */}
       <FormData onSuccess={fetchData} />
 
-      <div className="show-data max-w-4xl mx-auto mt-8">
-        <h2 className="font-bold text-2xl text-gray-800 mb-4">📦 Scraped Data</h2>
+      <div className="max-w-6xl mx-auto mt-10">
+        <h2 className="font-bold text-3xl mb-6 text-center text-gray-800">
+          Scraped Data
+        </h2>
+
         {data.length === 0 ? (
-          <p className="text-gray-500 italic text-center py-6 bg-gray-50 rounded-lg shadow">
+          <p className="text-gray-500 italic text-center py-6 bg-white rounded-lg shadow border">
             No data found
           </p>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {data.map((item, index) => (
               <div
                 key={index}
-                className="border border-gray-200 shadow-md p-5 rounded-xl bg-white hover:shadow-lg transition-all duration-200"
+                className="bg-white p-6 rounded-xl shadow border border-gray-300"
               >
-                {/* URL */}
-                <p className="text-sm text-gray-600 mb-2">
-                  <strong className="text-gray-800">🔗 URL:</strong> {item.url}
-                </p>
+                {/* URL + Title */}
+                <div className="mb-4">
+                  <p className="text-sm text-gray-600">
+                    <strong className="text-gray-800">🔗 URL:</strong>{" "}
+                    <span className="break-all">{item.url || "N/A"}</span>
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    <strong className="text-gray-800">📌 Title:</strong>{" "}
+                    {item.scrapedData?.title || "N/A"}
+                  </p>
+                </div>
 
-                {/* Options */}
-                {/* <p className="text-sm text-gray-600 mb-2">
-                  <strong className="text-gray-800">⚙️ Options:</strong>{" "}
-                  {Array.isArray(item.selectedOptions)
-                    ? item.selectedOptions.join(", ")
-                    : item.selectedOptions}
-                </p> */}
+                {/* Data Table */}
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-sm border border-gray-300 rounded-lg">
+                    <thead className="bg-gray-100 text-gray-800">
+                      <tr>
+                        <th className="px-4 py-3 text-left border border-gray-300 w-1/4">
+                          Emails
+                        </th>
+                        <th className="px-4 py-3 text-left border border-gray-300 w-1/4">
+                          Phones
+                        </th>
+                        <th className="px-4 py-3 text-left border border-gray-300 w-1/4">
+                          Links
+                        </th>
+                        <th className="px-4 py-3 text-left border border-gray-300 w-1/4">
+                          Images
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        {/* Emails */}
+                        <td className="px-4 py-3 border border-gray-300 align-top">
+                          {item.scrapedData?.emails?.length > 0 ? (
+                            <ul className="space-y-1">
+                              {item.scrapedData.emails.map((email, i) => (
+                                <li key={i}>
+                                  <a
+                                    href={`mailto:${email}`}
+                                    className="text-blue-600 underline"
+                                  >
+                                    {email}
+                                  </a>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            "N/A"
+                          )}
+                        </td>
 
-                {/* Description */}
-                {/* <p className="text-sm text-gray-600 mb-4">
-                  <strong className="text-gray-800">📝 Description:</strong>{" "}
-                  {item.description}
-                </p> */}
+                        {/* Phones */}
+                        <td className="px-4 py-3 border border-gray-300 align-top">
+                          {item.scrapedData?.phones?.length > 0 ? (
+                            <ul className="space-y-1">
+                              {item.scrapedData.phones.map((phone, i) => (
+                                <li key={i}>
+                                  <a
+                                    href={`tel:${phone}`}
+                                    className="text-green-600 underline"
+                                  >
+                                    {phone}
+                                  </a>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            "N/A"
+                          )}
+                        </td>
 
-                {/* Products Table */}
-                {Array.isArray(item.scrapedData) && item.scrapedData.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full border border-gray-200 text-sm rounded-lg overflow-hidden">
-                      <thead className="bg-gray-100 text-gray-700">
-                        <tr>
-                          <th className="px-4 py-2 text-left border">#</th>
-                          <th className="px-4 py-2 text-left border">Product Title</th>
-                          <th className="px-4 py-2 text-left border">Price</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {item.scrapedData.map((product, idx) => (
-                          <tr
-                            key={idx}
-                            className="hover:bg-gray-50 transition duration-150"
-                          >
-                            <td className="px-4 py-2 border">{idx + 1}</td>
-                            <td className="px-4 py-2 border">{product.title}</td>
-                            <td className="px-4 py-2 border">{product.price}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <p className="text-gray-500 italic">No products scraped</p>
-                )}
+                        {/* Links */}
+                        <td className="px-4 py-3 border border-gray-300 align-top">
+                          {item.scrapedData?.links?.length > 0 ? (
+                            <ul className="space-y-1">
+                              {item.scrapedData.links.map((link, i) => (
+                                <li key={i}>
+                                  <a
+                                    href={link}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-purple-600 underline break-all"
+                                  >
+                                    {link}
+                                  </a>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            "N/A"
+                          )}
+                        </td>
+
+                        {/* Images (as links) */}
+                        <td className="px-4 py-3 border border-gray-300 align-top">
+                          {item.scrapedData?.images?.length > 0 ? (
+                            <ul className="space-y-1">
+                              {item.scrapedData.images.map((img, i) => (
+                                <li key={i}>
+                                  <a
+                                    href={img}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-pink-600 underline break-all"
+                                  >
+                                    {img}
+                                  </a>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            "N/A"
+                          )}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
             ))}
           </div>
