@@ -1,26 +1,21 @@
 import re
 import html
 from urllib.parse import urljoin, urlparse
+
+import phonenumbers
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
 
 
-def scrape_website(url: str):
+def scrape_test(url: str):
     try:
         # --- Setup Selenium (headless Chrome) ---
         options = Options()
-        options.add_argument("--headless=new")
+        options.add_argument("--headless")  # run in background
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--disable-gpu")
-        options.add_argument("--remote-debugging-port=9222")
-
-        driver = webdriver.Chrome(
-            service=Service(ChromeDriverManager().install()), options=options
-        )
+        driver = webdriver.Chrome(options=options)
 
         # --- Load page ---
         driver.get(url)
@@ -29,10 +24,10 @@ def scrape_website(url: str):
 
         soup = BeautifulSoup(page_source, "html.parser")
 
-        # --- Extract plain text (keep original for emails) ---
+        # --- Extract plain text for regex search ---
         text = soup.get_text(" ", strip=True)
 
-        # --- Extract emails from plain text ---
+        # --- Extract emails from plain text (robust regex + unescape HTML) ---
         emails_text = re.findall(
             r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}",
             html.unescape(text),
@@ -45,39 +40,41 @@ def scrape_website(url: str):
                 address = a["href"].split("mailto:")[1].split("?")[0]
                 emails_mailto.append(address.strip())
 
-        # Merge & deduplicate emails
+        # --- Merge, deduplicate, normalize to lowercase ---
         emails = list(set([e.lower() for e in emails_text + emails_mailto]))
-        
-        # --- Extract phone numbers (regex + normalization) ---
-        raw_phones = re.findall(r"(\+?\d[\d\s\-\(\)]{7,}\d)", text)
 
-        normalized_map = {}
-        for phone in raw_phones:
-            # Normalize for deduplication: remove spaces, dashes, parentheses
-            norm = re.sub(r"[()\s\-]", "", phone)
+        # --- Extract phone numbers from text ---
+        phones = []
+        for match in phonenumbers.PhoneNumberMatcher(text, None):  # None = all regions
+            phones.append(
+                phonenumbers.format_number(
+                    match.number, phonenumbers.PhoneNumberFormat.E164
+                )
+            )
 
-            # Fix multiple '+' at start
-            norm = re.sub(r"^\+{2,}", "+", norm)
+        # --- Extract phone numbers from "tel:" links ---
+        for a in soup.find_all("a", href=True):
+            if a["href"].lower().startswith("tel:"):
+                raw_number = a["href"].split("tel:")[1].split("?")[0].strip()
+                try:
+                    parsed = phonenumbers.parse(raw_number, None)
+                    if phonenumbers.is_possible_number(parsed):
+                        phones.append(
+                            phonenumbers.format_number(
+                                parsed, phonenumbers.PhoneNumberFormat.E164
+                            )
+                        )
+                except phonenumbers.NumberParseException:
+                    continue
 
-            if norm not in normalized_map:
-                # Clean for display: unify spaces, remove parentheses/dashes
-                cleaned_display = re.sub(r"[()\s\-]+", " ", phone).strip()
-                normalized_map[norm] = cleaned_display
-
-        phones = list(normalized_map.values())
-
+        phones = list(set(phones))  # deduplicate
 
         # --- Extract external links only ---
         base_domain = urlparse(url).netloc
-        
-        base_links = []
         links = []
-        
         for a in soup.find_all("a", href=True):
-            
             abs_link = urljoin(url, a["href"])
             link_domain = urlparse(abs_link).netloc
-            
             if (
                 link_domain
                 and link_domain != base_domain
@@ -85,13 +82,6 @@ def scrape_website(url: str):
                 and not abs_link.startswith("tel:")
             ):
                 links.append(abs_link)
-            
-            if(link_domain != abs_link):
-                base_links.append(abs_link)
-                
-                
-                
- 
 
         # --- Extract images (absolute URLs) ---
         images = [urljoin(url, img["src"]) for img in soup.find_all("img", src=True)]
@@ -105,7 +95,6 @@ def scrape_website(url: str):
             "emails": emails,
             "phones": phones,
             "links": list(set(links)),
-            "base_links" : list(set(base_links)),
             "images": list(set(images)),
         }
 
