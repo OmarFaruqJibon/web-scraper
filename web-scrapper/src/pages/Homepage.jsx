@@ -56,9 +56,9 @@ const Homepage = () => {
                 </div>
 
                 {/* Data Table with fixed height & scrollbars */}
-                <div className="overflow-x-scroll">
-                  <div className="min-h-[200px] max-h-[500px] w-full overflow-y-auto border border-gray-300 rounded-lg">
-                    <table className="min-w-full text-sm">
+                <div className="overflow-x-auto">
+                  <div className="min-h-[200px] max-h-[500px] overflow-y-auto w-full border border-gray-300 rounded-lg">
+                    <table className="min-w-[1000px] text-sm">
                       <thead className="bg-gray-100 text-gray-800 sticky top-0 z-10">
                         <tr>
                           <th className="px-4 py-3 text-left border border-gray-300 w-1/4">

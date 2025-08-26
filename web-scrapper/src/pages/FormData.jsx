@@ -104,9 +104,10 @@ const FormData = ({ onSuccess }) => {
           </div> */}
 
           {/* Submit Button */}
-          <button
+
+          {/* <button
             type="submit"
-            disabled={isLoading} // disable while scraping
+            disabled={isLoading}
             className={`w-full font-medium py-3 rounded-xl shadow-md transition-all duration-300 ${
               isLoading
                 ? "bg-gray-400 cursor-not-allowed"
@@ -114,6 +115,46 @@ const FormData = ({ onSuccess }) => {
             }`}
           >
             {isLoading ? "Scraping..." : "Start Scraping"}
+          </button> */}
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className={`w-full font-medium py-3 rounded-xl shadow-md transition-all duration-300 relative overflow-hidden ${
+              isLoading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-indigo-600 hover:bg-indigo-700 text-white"
+            }`}
+          >
+            {isLoading ? (
+              <div className="flex items-center justify-center gap-3 relative z-10 text-white">
+                {/* Spinner */}
+                <span className="h-5 w-5 border-3 border-white border-t-transparent rounded-full animate-spin"></span>
+
+                {/* Text with bouncing dots */}
+                <span className="flex items-center">
+                  Scraping
+                  <span className="ml-1 flex">
+                    <span className="animate-bounce">.</span>
+                    <span className="animate-bounce [animation-delay:0.2s]">
+                      .
+                    </span>
+                    <span className="animate-bounce [animation-delay:0.4s]">
+                      .
+                    </span>
+                  </span>
+                </span>
+              </div>
+            ) : (
+              "Start Scraping"
+            )}
+
+            {/* Shimmer progress bar overlay */}
+            {isLoading && (
+              <div className="absolute inset-0 rounded-xl overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-[shimmer_2s_infinite]"></div>
+              </div>
+            )}
           </button>
         </form>
       </div>
