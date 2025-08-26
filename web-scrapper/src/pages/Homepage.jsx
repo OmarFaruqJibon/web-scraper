@@ -19,6 +19,7 @@ const Homepage = () => {
   }, []);
 
   console.log(data);
+<<<<<<< HEAD
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800 flex gap-y-4">
@@ -28,6 +29,15 @@ const Homepage = () => {
       </div>
 
       <div className="w-2/3 mx-auto mt-10">
+=======
+
+  return (
+    <div className="min-h-screen bg-gray-50 text-gray-800 p-6">
+      {/* Form */}
+      <FormData onSuccess={fetchData} />
+
+      <div className="max-w-6xl mx-auto mt-10">
+>>>>>>> 7ef05a1cf9c77e685ef6fa5437a422262c59fbcf
         <h2 className="font-bold text-3xl mb-6 text-center text-gray-800">
           Scraped Data
         </h2>
@@ -50,7 +60,11 @@ const Homepage = () => {
                     <span className="break-all">{item.url || "N/A"}</span>
                   </p>
                   <p className="text-sm text-gray-600 mt-1">
+<<<<<<< HEAD
                     <strong className="text-gray-800"> Title:</strong>{" "}
+=======
+                    <strong className="text-gray-800">📌 Title:</strong>{" "}
+>>>>>>> 7ef05a1cf9c77e685ef6fa5437a422262c59fbcf
                     {item.scrapedData?.title || "N/A"}
                   </p>
                 </div>
@@ -84,7 +98,11 @@ const Homepage = () => {
                                 <li key={i}>
                                   <a
                                     href={`mailto:${email}`}
+<<<<<<< HEAD
                                     className="text-gray-900"
+=======
+                                    className="text-blue-600 underline"
+>>>>>>> 7ef05a1cf9c77e685ef6fa5437a422262c59fbcf
                                   >
                                     {email}
                                   </a>
@@ -104,7 +122,11 @@ const Homepage = () => {
                                 <li key={i}>
                                   <a
                                     href={`tel:${phone}`}
+<<<<<<< HEAD
                                     className="text-green-900"
+=======
+                                    className="text-green-600 underline"
+>>>>>>> 7ef05a1cf9c77e685ef6fa5437a422262c59fbcf
                                   >
                                     {phone}
                                   </a>
@@ -119,14 +141,22 @@ const Homepage = () => {
                         {/* Links */}
                         <td className="px-4 py-3 border border-gray-300 align-top">
                           {item.scrapedData?.links?.length > 0 ? (
+<<<<<<< HEAD
                             <ul className="space-y-1 ">
+=======
+                            <ul className="space-y-1">
+>>>>>>> 7ef05a1cf9c77e685ef6fa5437a422262c59fbcf
                               {item.scrapedData.links.map((link, i) => (
                                 <li key={i}>
                                   <a
                                     href={link}
                                     target="_blank"
                                     rel="noopener noreferrer"
+<<<<<<< HEAD
                                     className="text-blue-900 break-all"
+=======
+                                    className="text-purple-600 underline break-all"
+>>>>>>> 7ef05a1cf9c77e685ef6fa5437a422262c59fbcf
                                   >
                                     {link}
                                   </a>
@@ -148,7 +178,11 @@ const Homepage = () => {
                                     href={img}
                                     target="_blank"
                                     rel="noopener noreferrer"
+<<<<<<< HEAD
                                     className="text-purple-900 break-all"
+=======
+                                    className="text-pink-600 underline break-all"
+>>>>>>> 7ef05a1cf9c77e685ef6fa5437a422262c59fbcf
                                   >
                                     {img}
                                   </a>
@@ -159,8 +193,11 @@ const Homepage = () => {
                             "N/A"
                           )}
                         </td>
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> 7ef05a1cf9c77e685ef6fa5437a422262c59fbcf
                       </tr>
                     </tbody>
                   </table>

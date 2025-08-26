@@ -53,4 +53,8 @@ def scrape_website(url: str):
         }
 
     except Exception as e:
+<<<<<<< HEAD
         return {"error": str(e)}
+=======
+        return {"error": str(e)}
+>>>>>>> 7ef05a1cf9c77e685ef6fa5437a422262c59fbcf

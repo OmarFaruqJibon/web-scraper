@@ -4,8 +4,16 @@
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
 }
 
+<<<<<<< HEAD
 
 @media (prefers-color-scheme: dark) {
+=======
+a:hover {
+  color: #535bf2;
+}
+
+@media (prefers-color-scheme: light) {
+>>>>>>> 7ef05a1cf9c77e685ef6fa5437a422262c59fbcf
   :root {
     color: #213547;
     background-color: #ffffff;
