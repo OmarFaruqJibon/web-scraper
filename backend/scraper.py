@@ -1,34 +1,56 @@
-# scraper.py
 import requests
 from bs4 import BeautifulSoup
+import re
+from urllib.parse import urljoin, urlparse
 
 def scrape_website(url: str):
-    scraped_data = []   # list, not dict
-
     try:
-        response = requests.get(url, timeout=10)
+        response = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
         response.encoding = "utf-8"
         response.raise_for_status()
         soup = BeautifulSoup(response.text, "html.parser")
 
-        item_lists = soup.find_all("li", class_="top-ads-container--1Jeoq")
+        text = soup.get_text(" ", strip=True)
 
-        for item in item_lists:
-            title_tag = item.find("h2", class_="title--3yncE")
-            price_tag = item.find("div", class_="price--3SnqI")
+        # --- Extract emails from plain text ---
+        emails_text = re.findall(r"[\w\.-]+@[\w\.-]+\.\w+", text)
 
-            if not title_tag or not price_tag:
-                continue
+        # --- Extract emails from "mailto:" links ---
+        emails_mailto = [
+            a["href"].replace("mailto:", "")
+            for a in soup.find_all("a", href=True)
+            if a["href"].startswith("mailto:")
+        ]
 
-            title = title_tag.get_text(strip=True)
-            price = price_tag.get_text(strip=True)
+        # Merge and deduplicate
+        emails = list(set(emails_text + emails_mailto))
 
-            scraped_data.append({
-                "title": title,
-                "price": price
-            })
+        # --- Extract phone numbers (basic regex) ---
+        phones = list(set(re.findall(r"(\+?\d[\d\s\-\(\)]{7,}\d)", text)))
+
+        # --- Extract external links only ---
+        base_domain = urlparse(url).netloc
+        links = []
+        for a in soup.find_all("a", href=True):
+            abs_link = urljoin(url, a["href"])
+            link_domain = urlparse(abs_link).netloc
+            if link_domain and link_domain != base_domain and not abs_link.startswith("mailto:"):
+                links.append(abs_link)
+
+        # --- Extract images (all, keep absolute URLs) ---
+        images = [urljoin(url, img["src"]) for img in soup.find_all("img", src=True)]
+
+        # --- Basic title ---
+        title = soup.title.string if soup.title else None
+
+        return {
+            "url": url,
+            "title": title,
+            "emails": emails,
+            "phones": phones,
+            "links": list(set(links)),
+            "images": list(set(images)),
+        }
 
     except Exception as e:
-        return [{"error": str(e)}]
-
-    return scraped_data
+        return {"error": str(e)}

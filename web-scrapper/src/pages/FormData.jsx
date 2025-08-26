@@ -45,9 +45,9 @@ const FormData = ({ onSuccess }) => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-lg p-8">
+      <div className="w-full max-w-lg bg-white rounded-2xl shadow-lg">
         <h2 className="text-2xl font-bold text-gray-800 mb-20 text-center">
-          Web Scraper Input
+          Web Scraper
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
