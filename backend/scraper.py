@@ -7,10 +7,8 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
-
 def scrape_website(url: str):
     try:
-        # --- Setup Selenium (headless Chrome) ---
         options = Options()
         options.add_argument("--headless=new")
         options.add_argument("--no-sandbox")
@@ -22,83 +20,54 @@ def scrape_website(url: str):
             service=Service(ChromeDriverManager().install()), options=options
         )
 
-        # --- Load page ---
         driver.get(url)
         page_source = driver.page_source
         driver.quit()
 
         soup = BeautifulSoup(page_source, "html.parser")
-
-        # --- Extract plain text (keep original for emails) ---
         text = soup.get_text(" ", strip=True)
 
-        # --- Extract emails from plain text ---
+        # Extract emails
         emails_text = re.findall(
-            r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}",
-            html.unescape(text),
+            r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", html.unescape(text)
         )
-
-        # --- Extract emails from "mailto:" links ---
-        emails_mailto = []
-        for a in soup.find_all("a", href=True):
-            if a["href"].lower().startswith("mailto:"):
-                address = a["href"].split("mailto:")[1].split("?")[0]
-                emails_mailto.append(address.strip())
-
-        # Merge & deduplicate emails
+        emails_mailto = [
+            a["href"].split("mailto:")[1].split("?")[0].strip()
+            for a in soup.find_all("a", href=True)
+            if a["href"].lower().startswith("mailto:")
+        ]
         emails = list(set([e.lower() for e in emails_text + emails_mailto]))
-        
-        # --- Extract phone numbers (regex + normalization) ---
-        raw_phones = re.findall(r"(\+?\d[\d\s\-\(\)]{7,}\d)", text)
 
+        # Extract phones
+        raw_phones = re.findall(r"(\+?\d[\d\s\-\(\)]{7,}\d)", text)
         normalized_map = {}
         for phone in raw_phones:
-            # Normalize for deduplication: remove spaces, dashes, parentheses
             norm = re.sub(r"[()\s\-]", "", phone)
-
-            # Fix multiple '+' at start
             norm = re.sub(r"^\+{2,}", "+", norm)
-
             if norm not in normalized_map:
-                # Clean for display: unify spaces, remove parentheses/dashes
                 cleaned_display = re.sub(r"[()\s\-]+", " ", phone).strip()
                 normalized_map[norm] = cleaned_display
-
         phones = list(normalized_map.values())
 
-
-        # --- Extract external links only ---
+        # Extract links
         base_domain = urlparse(url).netloc
-        
-        base_links = []
-        links = []
-        
+        base_links, external_links = [], []
         for a in soup.find_all("a", href=True):
-            
             abs_link = urljoin(url, a["href"])
             link_domain = urlparse(abs_link).netloc
-            
-            # list of all external links
             if (
                 link_domain
                 and link_domain != base_domain
                 and not abs_link.startswith("mailto:")
                 and not abs_link.startswith("tel:")
             ):
-                links.append(abs_link)
-                
-            # list of all domain links
-            if(link_domain != abs_link):
+                external_links.append(abs_link)
+            if link_domain == base_domain:
                 base_links.append(abs_link)
-                
-                
-                
- 
 
-        # --- Extract images (absolute URLs) ---
+        # Extract images
         images = [urljoin(url, img["src"]) for img in soup.find_all("img", src=True)]
 
-        # --- Page title ---
         title = soup.title.string if soup.title else None
 
         return {
@@ -106,8 +75,8 @@ def scrape_website(url: str):
             "title": title,
             "emails": emails,
             "phones": phones,
-            "links": list(set(links)),
-            "base_links" : list(set(base_links)),
+            "external_links": list(set(external_links)),
+            "base_links": list(set(base_links)),
             "images": list(set(images)),
         }
 
