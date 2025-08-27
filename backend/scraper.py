@@ -78,6 +78,7 @@ def scrape_website(url: str):
             abs_link = urljoin(url, a["href"])
             link_domain = urlparse(abs_link).netloc
             
+            # list of all external links
             if (
                 link_domain
                 and link_domain != base_domain
@@ -85,7 +86,8 @@ def scrape_website(url: str):
                 and not abs_link.startswith("tel:")
             ):
                 links.append(abs_link)
-            
+                
+            # list of all domain links
             if(link_domain != abs_link):
                 base_links.append(abs_link)
                 
