@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 import os
 
 # Import crawler
-from crawler import crawl_website  
+from crawler import crawl_website , crawl_progress
 
 load_dotenv()
 
@@ -42,6 +42,10 @@ def get_root():
 def get_data():
     datas = list(scraperdb_collection.find({}, {"_id": 0})) 
     return {"dataCollections": datas}
+
+@app.get("/progress")
+def get_progress():
+    return crawl_progress
 
 
 @app.post("/crawl")
