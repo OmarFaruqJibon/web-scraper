@@ -13,7 +13,6 @@ except OSError:
     nlp = spacy.load("en_core_web_sm")
 
 # --- Load Hugging Face Bangla NER model ---
-# NOTE: This model works only for Bangla-script names (not English transliteration).
 bn_tokenizer = AutoTokenizer.from_pretrained("sagorsarker/mbert-bengali-ner")
 bn_model = AutoModelForTokenClassification.from_pretrained("sagorsarker/mbert-bengali-ner")
 bn_ner = pipeline(
@@ -31,25 +30,42 @@ except:
     nltk.download("names")
     first_names = set(nltk_names.words("male.txt") + nltk_names.words("female.txt"))
 
+# --------------------------
+# Stop-word cleaner
+# --------------------------
+STOP_PATTERNS = [
+    r"\bProfessor\b.*", r"\bAssociate\b.*", r"\bAssistant\b.*",
+    r"\bLecturer\b.*", r"\bResearch(er| Fellow)\b.*", r"\bConsultant\b.*",
+    r"\bSpecialist\b.*", r"\bDepartment\b.*", r"\bFaculty\b.*", r"\bUniversity\b.*",
+    r"\bHead\b.*", r"\bChair(man|person)?\b.*", r"\bCoordinator\b.*",
+    r"\bDean\b.*", r"\bDirector\b.*", r"\bProfile\b.*", r"\bDept\b.*"
+    # Degrees
+    r"\bPh\.?D\b.*", r"\bM\.?Sc\b.*", r"\bB\.?Sc\b.*", r"\bMBBS\b.*",
+    r"\bMS\b.*", r"\bMD\b.*", r"\bFCPS\b.*", r"\bFRCS\b.*", r"\bFACS\b.*",
+    r"\bEngg\b.*", r"\bEngineering\b.*"
+]
+
+def strip_titles_and_degrees(name: str) -> str:
+    """
+    Remove academic/job titles or trailing degree info from names.
+    Works for both English and Bangla.
+    """
+    # Remove commas and extra text after them
+    name = re.split(r"[,-]", name)[0].strip()
+
+    # Remove stopword patterns
+    for pat in STOP_PATTERNS:
+        name = re.sub(pat, "", name, flags=re.IGNORECASE).strip()
+
+    # Remove multiple spaces
+    name = re.sub(r"\s+", " ", name).strip()
+
+    return name
+
 
 # --------------------------
 # Helpers
 # --------------------------
-def is_medical_context(name: str) -> bool:
-    """
-    Keep only names with Dr. prefix or that appear in a medical context.
-    """
-    prefixes_to_check = ("dr", "prof")
-    if name.lower().startswith(prefixes_to_check):
-        return True
-
-    medical_keywords = [
-        "surgeon", "surgery", "doctor", "professor", "consultant",
-        "specialist", "md", "fcps", "ms", "mbbs", "facs", "physician"
-    ]
-    return any(kw.lower() in name.lower() for kw in medical_keywords)
-
-
 def clean_and_validate_names(all_names, lang="en"):
     """
     Filter out false positives and non-person-like names.
@@ -57,28 +73,27 @@ def clean_and_validate_names(all_names, lang="en"):
     false_positives = {
         "Privacy Policy", "Terms of Service", "Contact Us", "About Us",
         "Sign In", "Log In", "Sign Up", "Home", "Products", "Services",
-        "Blog", "News", "Careers", "Support", "Help", "FAQ"
+        "Blog", "News", "Careers", "Support", "Help", "FAQ", "Professor",
+        "Employee", "Lecturer", "University", "Department", "Dept", "Profile", "Home", "All", "Employee", "Others", "Notices", "Member", "Information", "Charter", "People", "Study Leave", "Study", "Home Pages All", "Home Page", "dept", "Home About", "People Ex"
     }
 
     cleaned = set()
     for name in all_names:
-        name = name.strip()
+        name = strip_titles_and_degrees(name)
+
         if not name or name in false_positives:
             continue
         if len(name) < 2 or len(name) > 80:
             continue
-        if name.isupper():
-            continue
 
-        # English: require one valid first name unless it's a Dr./Md. style name
+        tokens = name.split()
+        valid = False
+
         if lang == "en":
-            tokens = name.split()
-            valid = False
-
-            # Accept names with Dr. or Md. regardless of dictionary
-            if name.lower().startswith("dr.") or tokens[0].lower() in ["dr.", "dr", "md.", "md"]:
+            if tokens[0].lower().rstrip(".") in ["dr", "md", "mr", "prof", "engr"]:
                 valid = True
-            else:
+
+            if not valid:
                 for token in tokens:
                     for fname in first_names:
                         if fuzz.ratio(token.lower(), fname.lower()) >= 90:
@@ -86,12 +101,19 @@ def clean_and_validate_names(all_names, lang="en"):
                             break
                     if valid:
                         break
+
+            if not valid and len(tokens) >= 2 and all(t[0].isupper() for t in tokens if t.isalpha()):
+                valid = True
+
             if not valid:
                 continue
 
-        # Apply medical filter
-        if not is_medical_context(name):
-            continue
+        elif lang == "bn":
+            # Must be at least two Bangla words
+            if len(tokens) >= 2 and all(re.match(r"^[\u0980-\u09FF]+$", t) for t in tokens):
+                valid = True
+            else:
+                continue
 
         cleaned.add(name)
 
@@ -104,7 +126,7 @@ def clean_and_validate_names(all_names, lang="en"):
 def extract_english_names(soup, text: str):
     all_names = set()
 
-    # --- spaCy NER ---
+    # spaCy NER
     doc = nlp(text)
     for ent in doc.ents:
         if ent.label_ == "PERSON":
@@ -112,26 +134,19 @@ def extract_english_names(soup, text: str):
             if 2 <= len(candidate.split()) <= 6:
                 all_names.add(candidate)
 
-    # --- Regex for doctor names ---
-    regex_names = re.findall(
-        r"\bDr\.?\s+[A-Z][a-zA-Z\.]+(?:\s+[A-Z][a-zA-Z\.]+){0,4}(?:\s*\([A-Za-z]+\))?",
-        text
-    )
-    for rn in regex_names:
-        all_names.add(rn.strip())
+    # Regex for prefixed names
+    prefixed_patterns = [
+        r"\b(?:Dr|Prof|Mr|Engr)\.?\s+[A-Z][a-zA-Z\.]+(?:\s+[A-Z][a-zA-Z\.]+){0,5}(?:\s*\([A-Za-z]+\))?"
+    ]
+    for pat in prefixed_patterns:
+        matches = re.findall(pat, text, re.IGNORECASE)
+        all_names.update([m.strip() for m in matches])
 
-    # --- Regex for general capitalized names (fallback) ---
-    generic_names = re.findall(r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3}\b", text)
-    for gn in generic_names:
-        all_names.add(gn.strip())
-
-    # --- Staff/team/author/profile selectors ---
-    for selector in ['[class*="team"]', '[class*="staff"]',
-                     '[class*="author"]', '[class*="profile"]']:
-        for elem in soup.select(selector):
-            elem_text = elem.get_text(" ", strip=True)
-            if 2 <= len(elem_text.split()) <= 6:
-                all_names.add(elem_text)
+    # Fallback: stricter capitalized names (avoid academic terms)
+    fallback = re.findall(r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2}\b", text)
+    for f in fallback:
+        if not re.search(r"(University|Department|Computer|System|Engineering|Science)", f, re.IGNORECASE):
+            all_names.add(f.strip())
 
     return clean_and_validate_names(all_names, lang="en")
 
