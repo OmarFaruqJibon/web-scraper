@@ -37,7 +37,8 @@ const Homepage = () => {
           </p>
         ) : (
           <div className="space-y-8">
-            {data.map((item, index) => (
+            {/* {data.map((item, index) => ( */}
+            {data.slice(-1).map((item, index) => (
               <div
                 key={index}
                 className="bg-white p-6 rounded-xl shadow border border-gray-300 mb-10"

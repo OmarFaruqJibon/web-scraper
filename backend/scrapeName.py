@@ -13,9 +13,15 @@ except OSError:
     nlp = spacy.load("en_core_web_sm")
 
 # --- Load Hugging Face Bangla NER model ---
+# NOTE: This model works only for Bangla-script names (not English transliteration).
 bn_tokenizer = AutoTokenizer.from_pretrained("sagorsarker/mbert-bengali-ner")
 bn_model = AutoModelForTokenClassification.from_pretrained("sagorsarker/mbert-bengali-ner")
-bn_ner = pipeline("ner", model=bn_model, tokenizer=bn_tokenizer, aggregation_strategy="simple")
+bn_ner = pipeline(
+    "ner",
+    model=bn_model,
+    tokenizer=bn_tokenizer,
+    aggregation_strategy="simple"
+)
 
 # --- Load English name dictionary ---
 try:
@@ -33,10 +39,8 @@ def is_medical_context(name: str) -> bool:
     """
     Keep only names with Dr. prefix or that appear in a medical context.
     """
-    
-    prefixes_to_check = ("dr", "DR" "Dr", "Engr", "ENGR", "engr")
-    
-    if name.startswith(prefixes_to_check):
+    prefixes_to_check = ("dr", "prof")
+    if name.lower().startswith(prefixes_to_check):
         return True
 
     medical_keywords = [
@@ -61,22 +65,27 @@ def clean_and_validate_names(all_names, lang="en"):
         name = name.strip()
         if not name or name in false_positives:
             continue
-        if len(name) < 2 or len(name) > 60:
+        if len(name) < 2 or len(name) > 80:
             continue
         if name.isupper():
             continue
 
-        # English: require one valid first name
+        # English: require one valid first name unless it's a Dr./Md. style name
         if lang == "en":
             tokens = name.split()
             valid = False
-            for token in tokens:
-                for fname in first_names:
-                    if fuzz.ratio(token.lower(), fname.lower()) >= 90:
-                        valid = True
+
+            # Accept names with Dr. or Md. regardless of dictionary
+            if name.lower().startswith("dr.") or tokens[0].lower() in ["dr.", "dr", "md.", "md"]:
+                valid = True
+            else:
+                for token in tokens:
+                    for fname in first_names:
+                        if fuzz.ratio(token.lower(), fname.lower()) >= 90:
+                            valid = True
+                            break
+                    if valid:
                         break
-                if valid:
-                    break
             if not valid:
                 continue
 
@@ -95,26 +104,33 @@ def clean_and_validate_names(all_names, lang="en"):
 def extract_english_names(soup, text: str):
     all_names = set()
 
-    # spaCy NER
+    # --- spaCy NER ---
     doc = nlp(text)
     for ent in doc.ents:
         if ent.label_ == "PERSON":
             candidate = ent.text.strip()
-            if 2 <= len(candidate.split()) <= 5:
+            if 2 <= len(candidate.split()) <= 6:
                 all_names.add(candidate)
 
-    # Regex fallback
-    regex_names = re.findall(r"\b[A-Z][a-z]+ [A-Z][a-z]+\b", text)
+    # --- Regex for doctor names ---
+    regex_names = re.findall(
+        r"\bDr\.?\s+[A-Z][a-zA-Z\.]+(?:\s+[A-Z][a-zA-Z\.]+){0,4}(?:\s*\([A-Za-z]+\))?",
+        text
+    )
     for rn in regex_names:
-        if 2 <= len(rn.split()) <= 3:
-            all_names.add(rn)
+        all_names.add(rn.strip())
 
-    # Staff/team/author/profile selectors
+    # --- Regex for general capitalized names (fallback) ---
+    generic_names = re.findall(r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3}\b", text)
+    for gn in generic_names:
+        all_names.add(gn.strip())
+
+    # --- Staff/team/author/profile selectors ---
     for selector in ['[class*="team"]', '[class*="staff"]',
                      '[class*="author"]', '[class*="profile"]']:
         for elem in soup.select(selector):
             elem_text = elem.get_text(" ", strip=True)
-            if 2 <= len(elem_text.split()) <= 5:
+            if 2 <= len(elem_text.split()) <= 6:
                 all_names.add(elem_text)
 
     return clean_and_validate_names(all_names, lang="en")

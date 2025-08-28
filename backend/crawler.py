@@ -38,7 +38,7 @@ def normalize_url(url: str) -> str:
     ))
 
 
-def crawl_website(start_url: str, max_pages: int = 10):
+def crawl_website(start_url: str, max_pages: int = 1):
     visited = set()
     queue = deque([start_url])
     count = 0
