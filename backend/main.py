@@ -1,35 +1,28 @@
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 from pydantic import BaseModel
 from pymongo import MongoClient
 from dotenv import load_dotenv
 import os
-from bson import ObjectId
 
-# import scraper function
-from scraper import scrape_website  
+# Import crawler
+from crawler import crawl_website , crawl_progress
 
 load_dotenv()
 
-# ---------- MongoDB Setup ----------
 MONGO_URI = os.getenv("MONGO_URI")
 client = MongoClient(MONGO_URI)
 db = client["scraperdb"]       
 scraperdb_collection = db["data"]  
 
-# ---------- FastAPI Models ----------
 class Data(BaseModel):
     url: str
-    selectedOptions: List[str]
-    description: str
 
 app = FastAPI()
 
-origins = [
-    "http://localhost:5173"
-]
+origins = ["http://localhost:5173"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -50,28 +43,15 @@ def get_data():
     datas = list(scraperdb_collection.find({}, {"_id": 0})) 
     return {"dataCollections": datas}
 
+@app.get("/progress")
+def get_progress():
+    return crawl_progress
 
-@app.post("/data")
-def add_data(data: Data):
-    # Insert initial request
-    inserted = scraperdb_collection.insert_one(data.dict())
-    inserted_id = inserted.inserted_id
 
-    # Call scraper
-    scraped_data = scrape_website(data.url)
-
-    scraperdb_collection.update_one(
-        {"_id": ObjectId(inserted_id)},
-        {"$set": {"scrapedData": scraped_data}}
-    )
-
-    return {
-        "id": str(inserted_id),
-        "url": data.url,
-        "description": data.description,
-        "selectedOptions": data.selectedOptions,
-        "scrapedData": scraped_data
-    }
+@app.post("/crawl")
+def start_crawl(data: Data, background_tasks: BackgroundTasks):
+    background_tasks.add_task(crawl_website, data.url)
+    return {"message": f"Crawling started for {data.url}"}
 
 
 if __name__ == "__main__":

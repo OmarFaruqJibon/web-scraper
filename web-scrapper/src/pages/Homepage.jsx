@@ -21,12 +21,13 @@ const Homepage = () => {
   console.log(data);
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-800 p-6">
-      {/* Form */}
-      <FormData onSuccess={fetchData} />
+    <div className="min-h-screen bg-gray-50 text-gray-800 flex gap-y-4">
+      <div className="form-container w-1/3">
+        <FormData onSuccess={fetchData} />
+      </div>
 
-      <div className="max-w-6xl mx-auto mt-10">
-        <h2 className="font-bold text-3xl mb-6 text-center text-gray-800">
+      <div className="w-2/3 mx-auto mt-10">
+        <h2 className="font-bold text-2xl mb-6 text-center text-gray-800">
           Scraped Data
         </h2>
 
@@ -36,130 +37,175 @@ const Homepage = () => {
           </p>
         ) : (
           <div className="space-y-8">
-            {data.map((item, index) => (
+            {/* {data.map((item, index) => ( */}
+            {data.slice(-1).map((item, index) => (
               <div
                 key={index}
-                className="bg-white p-6 rounded-xl shadow border border-gray-300"
+                className="bg-white p-6 rounded-xl shadow border border-gray-300 mb-10"
               >
                 {/* URL + Title */}
                 <div className="mb-4">
                   <p className="text-sm text-gray-600">
-                    <strong className="text-gray-800">🔗 URL:</strong>{" "}
-                    <span className="break-all">{item.url || "N/A"}</span>
+                    <strong className="text-gray-800">🔗 URL :</strong>{" "}
+                    <span className="break-all">
+                      <a
+                        target="_blank"
+                        className="text-blue-900"
+                        href={item.url}
+                      >
+                        {item.url}
+                      </a>
+                    </span>
                   </p>
                   <p className="text-sm text-gray-600 mt-1">
-                    <strong className="text-gray-800">📌 Title:</strong>{" "}
-                    {item.scrapedData?.title || "N/A"}
+                    <strong className="text-gray-800">Title :</strong>{" "}
+                    {item.title || "Title not found!"}
                   </p>
                 </div>
 
                 {/* Data Table */}
                 <div className="overflow-x-auto">
-                  <table className="min-w-full text-sm border border-gray-300 rounded-lg">
-                    <thead className="bg-gray-100 text-gray-800">
-                      <tr>
-                        <th className="px-4 py-3 text-left border border-gray-300 w-1/4">
-                          Emails
-                        </th>
-                        <th className="px-4 py-3 text-left border border-gray-300 w-1/4">
-                          Phones
-                        </th>
-                        <th className="px-4 py-3 text-left border border-gray-300 w-1/4">
-                          Links
-                        </th>
-                        <th className="px-4 py-3 text-left border border-gray-300 w-1/4">
-                          Images
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        {/* Emails */}
-                        <td className="px-4 py-3 border border-gray-300 align-top">
-                          {item.scrapedData?.emails?.length > 0 ? (
-                            <ul className="space-y-1">
-                              {item.scrapedData.emails.map((email, i) => (
-                                <li key={i}>
-                                  <a
-                                    href={`mailto:${email}`}
-                                    className="text-blue-600 underline"
-                                  >
-                                    {email}
-                                  </a>
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            "N/A"
-                          )}
-                        </td>
+                  <div className="min-h-[200px] max-h-[500px] overflow-y-auto w-full border border-gray-300 rounded-lg">
+                    <table className="min-w-[1000px] text-sm">
+                      <thead className="bg-gray-100 text-gray-800 sticky top-0 z-10">
+                        <tr>
+                          <th className="px-4 py-3 text-left border border-gray-300 w-1/5">
+                            Names
+                          </th>
+                          <th className="px-4 py-3 text-left border border-gray-300 w-1/5">
+                            Emails
+                          </th>
+                          <th className="px-4 py-3 text-left border border-gray-300 w-1/5">
+                            Phones
+                          </th>
+                          <th className="px-4 py-3 text-left border border-gray-300 w-1/5">
+                            Base Links
+                          </th>
+                          {/* <th className="px-4 py-3 text-left border border-gray-300 w-1/5">External Links</th> */}
+                          <th className="px-4 py-3 text-left border border-gray-300 w-1/5">
+                            Images
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          {/* Names */}
+                          <td className="px-4 py-3 border border-gray-300 align-top">
+                            {item.names?.length > 0 ? (
+                              <ul className="space-y-1">
+                                {item.names.map((name, i) => (
+                                  <li key={i} className="text-gray-900">
+                                    {name}
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              "No names found in this page!"
+                            )}
+                          </td>
 
-                        {/* Phones */}
-                        <td className="px-4 py-3 border border-gray-300 align-top">
-                          {item.scrapedData?.phones?.length > 0 ? (
-                            <ul className="space-y-1">
-                              {item.scrapedData.phones.map((phone, i) => (
-                                <li key={i}>
-                                  <a
-                                    href={`tel:${phone}`}
-                                    className="text-green-600 underline"
-                                  >
-                                    {phone}
-                                  </a>
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            "N/A"
-                          )}
-                        </td>
+                          {/* Emails */}
+                          <td className="px-4 py-3 border border-gray-300 align-top">
+                            {item.emails?.length > 0 ? (
+                              <ul className="space-y-1">
+                                {item.emails.map((email, i) => (
+                                  <li key={i}>
+                                    <a
+                                      href={`mailto:${email}`}
+                                      className="text-gray-900"
+                                    >
+                                      {email}
+                                    </a>
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              "No email found in this page!"
+                            )}
+                          </td>
 
-                        {/* Links */}
-                        <td className="px-4 py-3 border border-gray-300 align-top">
-                          {item.scrapedData?.links?.length > 0 ? (
-                            <ul className="space-y-1">
-                              {item.scrapedData.links.map((link, i) => (
-                                <li key={i}>
-                                  <a
-                                    href={link}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-purple-600 underline break-all"
-                                  >
-                                    {link}
-                                  </a>
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            "N/A"
-                          )}
-                        </td>
+                          {/* Phones */}
+                          <td className="px-4 py-3 border border-gray-300 align-top">
+                            {item.phones?.length > 0 ? (
+                              <ul className="space-y-1">
+                                {item.phones.map((phone, i) => (
+                                  <li key={i}>
+                                    <a
+                                      href={`tel:${phone}`}
+                                      className="text-green-900"
+                                    >
+                                      {phone}
+                                    </a>
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              "No phone number found in this page!"
+                            )}
+                          </td>
 
-                        {/* Images (as links) */}
-                        <td className="px-4 py-3 border border-gray-300 align-top">
-                          {item.scrapedData?.images?.length > 0 ? (
-                            <ul className="space-y-1">
-                              {item.scrapedData.images.map((img, i) => (
-                                <li key={i}>
-                                  <a
-                                    href={img}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-pink-600 underline break-all"
-                                  >
-                                    {img}
-                                  </a>
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            "N/A"
-                          )}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                          {/* Base Links */}
+                          <td className="px-4 py-3 border border-gray-300 align-top">
+                            {item.base_links?.length > 0 ? (
+                              <ul className="space-y-1">
+                                {item.base_links.map((base_link, i) => (
+                                  <li key={i}>
+                                    <a
+                                      href={base_link}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-blue-900 break-all"
+                                    >
+                                      {base_link}
+                                    </a>
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              "No baselink found in this page!"
+                            )}
+                          </td>
+
+                          {/* External Links */}
+                          {/* <td className="px-4 py-3 border border-gray-300 align-top">
+                            {item.external_links?.length > 0 ? (
+                              <ul className="space-y-1">
+                                {item.external_links.map((link, i) => (
+                                  <li key={i}>
+                                    <a href={link} target="_blank" rel="noopener noreferrer" className="text-blue-900 break-all">
+                                      {link}
+                                    </a>
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : "No link found in this page!"}
+                          </td> */}
+
+                          {/* Images */}
+                          <td className="px-4 py-3 border border-gray-300 align-top">
+                            {item.images?.length > 0 ? (
+                              <ul className="space-y-1">
+                                {item.images.map((img, i) => (
+                                  <li key={i}>
+                                    <a
+                                      href={img}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-purple-900 break-all"
+                                    >
+                                      {img}
+                                    </a>
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              "No image found in this page!"
+                            )}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             ))}
