@@ -38,8 +38,7 @@ STOP_PATTERNS = [
     r"\bLecturer\b.*", r"\bResearch(er| Fellow)\b.*", r"\bConsultant\b.*",
     r"\bSpecialist\b.*", r"\bDepartment\b.*", r"\bFaculty\b.*", r"\bUniversity\b.*",
     r"\bHead\b.*", r"\bChair(man|person)?\b.*", r"\bCoordinator\b.*",
-    r"\bDean\b.*", r"\bDirector\b.*", r"\bProfile\b.*", r"\bDept\b.*"
-    # Degrees
+    r"\bDean\b.*", r"\bDirector\b.*", r"\bProfile\b.*", r"\bDept\b.*",
     r"\bPh\.?D\b.*", r"\bM\.?Sc\b.*", r"\bB\.?Sc\b.*", r"\bMBBS\b.*",
     r"\bMS\b.*", r"\bMD\b.*", r"\bFCPS\b.*", r"\bFRCS\b.*", r"\bFACS\b.*",
     r"\bEngg\b.*", r"\bEngineering\b.*"
@@ -74,7 +73,7 @@ def clean_and_validate_names(all_names, lang="en"):
         "Privacy Policy", "Terms of Service", "Contact Us", "About Us",
         "Sign In", "Log In", "Sign Up", "Home", "Products", "Services",
         "Blog", "News", "Careers", "Support", "Help", "FAQ", "Professor",
-        "Employee", "Lecturer", "University", "Department", "Dept", "Profile", "Home", "All", "Employee", "Others", "Notices", "Member", "Information", "Charter", "People", "Study Leave", "Study", "Home Pages All", "Home Page", "dept", "Home About", "People Ex"
+        "Employee", "Lecturer", "University", "Department", "Dept", "Profile", "Home", "All", "Employee", "Others", "Notices", "Member", "Information", "Charter", "People", "Study Leave", "Study", "Home Pages All", "Home Page", "dept", "Home About", "People Ex", "Advisory Committee", "Staff List Events", "Services Important Links", "Publications Online Services", "Google Classroom", "Google", "Library"
     }
 
     cleaned = set()
@@ -147,6 +146,7 @@ def extract_english_names(soup, text: str):
     for f in fallback:
         if not re.search(r"(University|Department|Computer|System|Engineering|Science)", f, re.IGNORECASE):
             all_names.add(f.strip())
+    
 
     return clean_and_validate_names(all_names, lang="en")
 
