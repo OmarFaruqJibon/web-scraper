@@ -6,27 +6,26 @@ const FormData = ({ onSuccess }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(null);
 
-useEffect(() => {
-  let interval;
-  if (isLoading) {
-    interval = setInterval(async () => {
-      try {
-        const res = await api.get("/progress");
-        setProgress(res.data);
+  useEffect(() => {
+    let interval;
+    if (isLoading) {
+      interval = setInterval(async () => {
+        try {
+          const res = await api.get("/progress");
+          setProgress(res.data);
 
-        if (res.data.status === "finished" || res.data.status === "error") {
-          clearInterval(interval);
-          setIsLoading(false);
-          if (onSuccess) onSuccess(); // refresh data
+          if (res.data.status === "finished" || res.data.status === "error") {
+            clearInterval(interval);
+            setIsLoading(false);
+            if (onSuccess) onSuccess(); // refresh data
+          }
+        } catch (err) {
+          console.error("Error fetching progress", err);
         }
-      } catch (err) {
-        console.error("Error fetching progress", err);
-      }
-    }, 1000); // poll every 1s
-  }
-  return () => clearInterval(interval);
-}, [isLoading]);
-
+      }, 1000); // poll every 1s
+    }
+    return () => clearInterval(interval);
+  }, [isLoading]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -64,7 +63,7 @@ useEffect(() => {
             />
           </div>
 
-            <button
+          <button
             type="submit"
             disabled={isLoading}
             className={`w-full font-medium py-3 rounded-xl shadow-md transition-all duration-300 relative overflow-hidden ${
@@ -108,10 +107,16 @@ useEffect(() => {
         {/* Show Progress */}
         {progress && (
           <div className="mt-6 p-4 bg-gray-100 rounded-lg text-sm">
-            <p>Status: <span className="font-semibold">{progress.status}</span></p>
-            <p>Progress: {progress.done} / {progress.total}</p>
+            <p>
+              Status: <span className="font-semibold">{progress.status}</span>
+            </p>
+            <p>
+              Progress: {progress.done} / {progress.total}
+            </p>
             {progress.current_url && (
-              <p className="truncate text-gray-600">Current: {progress.current_url}</p>
+              <p className="truncate text-gray-600">
+                Current: {progress.current_url}
+              </p>
             )}
           </div>
         )}
