@@ -48,7 +48,13 @@ const Homepage = () => {
                   <p className="text-sm text-gray-600">
                     <strong className="text-gray-800">🔗 URL :</strong>{" "}
                     <span className="break-all">
-                      <a target="_blank" className="text-blue-900" href={item.url}>{item.url}</a>
+                      <a
+                        target="_blank"
+                        className="text-blue-900"
+                        href={item.url}
+                      >
+                        {item.url}
+                      </a>
                     </span>
                   </p>
                   <p className="text-sm text-gray-600 mt-1">

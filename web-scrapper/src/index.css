@@ -4,7 +4,6 @@
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
 }
 
-
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
@@ -17,7 +16,6 @@
     background-color: #f9f9f9;
   }
 }
-
 
 @keyframes shimmer {
   0% {
