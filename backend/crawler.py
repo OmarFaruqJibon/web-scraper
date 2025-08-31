@@ -1,9 +1,8 @@
+# crawler.py
 import time
 from collections import deque
 from pymongo import MongoClient
 from scraper import scrape_website
-# from scraper_ai import scrape_website
-
 from urllib.parse import urlparse, urlunparse
 import os
 from dotenv import load_dotenv
@@ -25,28 +24,26 @@ crawl_progress = {
 
 
 def normalize_url(url: str) -> str:
-    """
-    Normalize a URL to avoid duplicates.
-    Keeps scheme, domain, and path only.
-    """
+    """Strip query/hash and normalize URL."""
     parsed = urlparse(url)
     return urlunparse((
         parsed.scheme,
         parsed.netloc,
         parsed.path.rstrip("/"),
-        "", "", ""  # strip params, query, fragment
+        "", "", ""   # remove params, query, fragment
     ))
 
 
-def crawl_website(start_url: str, max_pages: int = 1):
+def crawl_website(start_url: str, max_pages: int = 1, max_depth: int = 1):
+    """
+    Crawl a website recursively up to max_pages and max_depth.
+    """
     visited = set()
-    queue = deque([start_url])
+    queue = deque([(start_url, 0)])  # store (url, depth)
     count = 0
 
-    # Domain restriction
     start_domain = urlparse(start_url).netloc
 
-    # Reset progress
     crawl_progress["total"] = max_pages
     crawl_progress["done"] = 0
     crawl_progress["status"] = "running"
@@ -54,7 +51,7 @@ def crawl_website(start_url: str, max_pages: int = 1):
 
     try:
         while queue and count < max_pages:
-            url = queue.popleft()
+            url, depth = queue.popleft()
             normalized_url = normalize_url(url)
 
             if normalized_url in visited:
@@ -66,28 +63,29 @@ def crawl_website(start_url: str, max_pages: int = 1):
             try:
                 scraped = scrape_website(normalized_url)
             except Exception as e:
-                print(f"Error scraping {normalized_url}: {e}")
+                print(f"❌ Error scraping {normalized_url}: {e}")
                 continue
 
             scraperdb_collection.insert_one(scraped)
             count += 1
             crawl_progress["done"] = count
-            print(f"[{count}] Scraped: {normalized_url}")
+            print(f"[{count}] Scraped: {normalized_url} (depth={depth})")
 
-            # Expand crawl with same-domain links
-            for link in scraped.get("base_links", []):
-                norm_link = normalize_url(link)
-                link_domain = urlparse(norm_link).netloc
-
-                if link_domain == start_domain and norm_link not in visited:
-                    queue.append(norm_link)
+            # Only go deeper if depth limit not exceeded
+            if depth < max_depth:
+                for link in scraped.get("base_links", []):
+                    norm_link = normalize_url(link)
+                    link_domain = urlparse(norm_link).netloc
+                    if link_domain == start_domain and norm_link not in visited:
+                        queue.append((norm_link, depth + 1))
 
             time.sleep(1)  # politeness delay
 
         crawl_progress["status"] = "finished"
         crawl_progress["current_url"] = None
-        print(f"\n✅ Crawl process finished. Total crawled {crawl_progress['done']} pages.\n")
+        print(f"\n✅ Crawl finished. Total crawled {crawl_progress['done']} pages.\n")
 
     except Exception as e:
         crawl_progress["status"] = "error"
-        print(f"Crawl error: {e}")
+        crawl_progress["current_url"] = None
+        print(f"⚠️ Crawl error: {e}")
