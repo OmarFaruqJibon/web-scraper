@@ -3,16 +3,25 @@ import json
 
 ollama_url = "http://localhost:11434/api/generate"
 
-data = requests.post(
-    "http://localhost:11434/api/generate",
-    json={"model": "llama3:latest", "prompt": "Who are you?"}, 
-    stream=False
-)
+# Send the request (streaming=True is important here)
+with requests.post(
+    ollama_url,
+    json={"model": "llama3:latest", "prompt": "Who are you?"},
+    stream=True,
+) as response:
+    response.raise_for_status()
 
-print(data.text)
-    
-    
-    
+    full_text = ""
+    for line in response.iter_lines():
+        if line:
+            data = json.loads(line.decode("utf-8"))
+            if "response" in data:
+                full_text += data["response"]
+            if data.get("done", False):
+                break
+
+print(full_text)
+
     
   
     
