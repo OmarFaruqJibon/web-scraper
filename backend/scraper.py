@@ -63,7 +63,8 @@ def send_html_to_ollama(text: str, retries: int = 1):
     # headers = {"Content-Type": "application/json"}
 
     payload = {
-        "model": "deepseek-r1:8b",
+        # "model": "deepseek-r1:8b",
+        "model": "llama3:latest",
         "prompt": prompt,
         "stream": False
     }
@@ -79,9 +80,11 @@ def send_html_to_ollama(text: str, retries: int = 1):
 
             elapsed = end_time - start_time
             
-            print(f"\nOllama Loaded. Extraction took {elapsed:.2f} seconds\n")
-            
             response.raise_for_status()
+            
+            print(f"\n⚡Ollama Loaded. Extraction took {elapsed:.2f} seconds\n")
+            
+            
             
         except requests.exceptions.RequestException as e:
             print(f"Ollama request failed (attempt {attempt+1}): {e}")
@@ -90,17 +93,8 @@ def send_html_to_ollama(text: str, retries: int = 1):
                 continue
             return []
         
-        
-        # response = requests.post(ollama_url, json=payload, timeout=900)
-
-        # if not response.ok:
-        #     if attempt < retries - 1:
-        #         time.sleep(1)  
-        #         continue
-        #     raise RuntimeError(f"{response.status_code} error: {response.text}")
 
         data = response.json()
-        # print(data)
         raw_text = data.get("response", "").strip()
 
         
@@ -125,7 +119,7 @@ def send_html_to_ollama(text: str, retries: int = 1):
 def scrape_website(url: str):
     """Scrape website, extract information, links, and images."""
     
-    print(f"🔎 Scraping {url} ...")
+    print(f"\n\n🔎 Scraping: {url} ...")
 
     try:
         # --- Selenium setup ---

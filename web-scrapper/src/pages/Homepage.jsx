@@ -8,7 +8,7 @@ const Homepage = () => {
   const fetchData = async () => {
     try {
       const response = await api.get("/data");
-      setData(response.data.dataCollections);
+      setData(response?.data?.dataCollections);
     } catch (error) {
       console.error("Error fetching data", error);
     }
@@ -18,14 +18,14 @@ const Homepage = () => {
     fetchData();
   }, []);
 
-  console.log(data);
-
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-800 flex gap-y-4">
+    <div className="min-h-screen bg-gray-50 text-gray-800 flex gap-6">
+      {/* Left: Form */}
       <div className="form-container w-1/3">
         <FormData onSuccess={fetchData} />
       </div>
 
+      {/* Right: Scraped Data */}
       <div className="w-2/3 mx-auto mt-10">
         <h2 className="font-bold text-2xl mb-6 text-center text-gray-800">
           Scraped Data
@@ -36,123 +36,118 @@ const Homepage = () => {
             No data found
           </p>
         ) : (
-          <div className="space-y-8">
-            {/* {data.map((item, index) => ( */}
-            <div className="space-y-8">
-              {data.slice(-1).map((info) =>
-                info.information.map((item, index) => (
-                  <div
-                    key={index}
-                    className="bg-white p-6 rounded-xl shadow border border-gray-300 mb-10"
-                  >
-                    {/* URL + Title */}
-                    <div className="mb-4">
-                      <p className="text-sm text-gray-600">
-                        <strong className="text-gray-800">🔗 URL :</strong>{" "}
-                        <span className="break-all">
-                          <a
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-900"
-                            href={info.url}
-                          >
-                            {info.url}
-                          </a>
-                        </span>
-                      </p>
-                      <p className="text-sm text-gray-600 mt-1">
-                        <strong className="text-gray-800">Title :</strong>{" "}
-                        {info.title || "Title not found!"}
-                      </p>
-                    </div>
+          <div className="space-y-10">
+            {data
+              .filter((info) => info?.information?.length > 0)
+              .map((info, infoIndex) => (
+                <div
+                  key={infoIndex}
+                  className="bg-white p-6 rounded-xl shadow border border-gray-300"
+                >
+                  {/* URL + Title */}
+                  <div className="mb-6">
+                    <p className="text-sm text-gray-600">
+                      <strong className="text-gray-800">🔗 URL :</strong>{" "}
+                      <span className="break-all">
+                        <a
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-900 hover:underline"
+                          href={info.url}
+                        >
+                          {info.url}
+                        </a>
+                      </span>
+                    </p>
+                    <p className="text-sm text-gray-600 mt-1">
+                      <strong className="text-gray-800">Title :</strong>{" "}
+                      {info.title || "Title not found!"}
+                    </p>
+                  </div>
 
-                    {/* Data Table */}
-                    <div className="overflow-x-auto">
-                      <div className="min-h-[200px] max-h-[500px] overflow-y-auto w-full border border-gray-300 rounded-lg">
-                        <table className="min-w-[1000px] text-sm">
-                          <thead className="bg-gray-100 text-gray-800 sticky top-0 z-10">
-                            <tr>
-                              <th className="px-4 py-3 text-left border border-gray-300 w-1/5">
-                                Names
-                              </th>
-                              <th className="px-4 py-3 text-left border border-gray-300 w-1/5">
-                                Emails
-                              </th>
-                              <th className="px-4 py-3 text-left border border-gray-300 w-1/5">
-                                Phones
-                              </th>
-                              <th className="px-4 py-3 text-left border border-gray-300 w-1/5">
-                                Images
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr>
-                              {/* Names */}
-                              <td className="px-4 py-3 border border-gray-300 align-top">
-                                {item.name
-                                  ? item.name
-                                  : "No names found in this page!"}
+                  {/* Data Table */}
+                  <div className="overflow-x-auto">
+                    <div className="max-h-[500px] overflow-y-auto w-full border border-gray-300 rounded-lg">
+                      <table className="min-w-[800px] text-sm border-collapse">
+                        <thead className="bg-gray-100 text-gray-800 sticky top-0 z-10">
+                          <tr>
+                            <th className="px-4 py-3 text-left border border-gray-300">Name</th>
+                            <th className="px-4 py-3 text-left border border-gray-300">Email</th>
+                            <th className="px-4 py-3 text-left border border-gray-300">Phone</th>
+                            <th className="px-4 py-3 text-left border border-gray-300">Location</th>
+                            <th className="px-4 py-3 text-left border border-gray-300">Image</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {info.information.map((item, i) => (
+                            <tr
+                              key={i}
+                              className="odd:bg-white even:bg-gray-50 hover:bg-gray-100 transition"
+                            >
+                              {/* Name */}
+                              <td className="px-4 py-3 border border-gray-300">
+                                {item.name || "N/A"}
                               </td>
 
-                              {/* Emails */}
-                              <td className="px-4 py-3 border border-gray-300 align-top">
+                              {/* Email */}
+                              <td className="px-4 py-3 border border-gray-300">
                                 {item.email ? (
                                   <a
                                     href={`mailto:${item.email}`}
-                                    className="text-gray-900"
+                                    className="text-blue-700 hover:underline"
                                   >
                                     {item.email}
                                   </a>
                                 ) : (
-                                  "No email found in this page!"
+                                  "N/A"
                                 )}
                               </td>
 
-                              {/* Phones */}
-                              <td className="px-4 py-3 border border-gray-300 align-top">
+                              {/* Phone */}
+                              <td className="px-4 py-3 border border-gray-300">
                                 {item.phone ? (
                                   <a
                                     href={`tel:${item.phone}`}
-                                    className="text-green-900"
+                                    className="text-green-700 hover:underline"
                                   >
                                     {item.phone}
                                   </a>
                                 ) : (
-                                  "No phone number found in this page!"
+                                  "N/A"
                                 )}
                               </td>
 
-                              {/* Images */}
-                              <td className="px-4 py-3 border border-gray-300 align-top">
-                                {info.images?.length > 0 ? (
-                                  <ul className="space-y-1">
-                                    {info.images.map((img, i) => (
-                                      <li key={i}>
-                                        <a
-                                          href={img}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="text-purple-900 break-all"
-                                        >
-                                          {img}
-                                        </a>
-                                      </li>
-                                    ))}
-                                  </ul>
+                              {/* Location */}
+                              <td className="px-4 py-3 border border-gray-300">
+                                {item.location || "N/A"}
+                              </td>
+
+                              {/* Image */}
+                              <td className="px-4 py-3 border border-gray-300">
+                                {info.images && info.images[i] ? (
+                                  <a
+                                    href={info.images[i]}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    <img
+                                      src={info.images[i]}
+                                      alt={item.name || "Profile"}
+                                      className="w-12 h-12 rounded-full object-cover border"
+                                    />
+                                  </a>
                                 ) : (
-                                  "No image found in this page!"
+                                  "N/A"
                                 )}
                               </td>
                             </tr>
-                          </tbody>
-                        </table>
-                      </div>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
-                ))
-              )}
-            </div>
+                </div>
+              ))}
           </div>
         )}
       </div>
