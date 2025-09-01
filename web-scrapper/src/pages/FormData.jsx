@@ -22,7 +22,7 @@ const FormData = ({ onSuccess }) => {
         } catch (err) {
           console.error("Error fetching progress", err);
         }
-      }, 2000); // poll every 2s
+      }, 30000); // poll every 2s
     }
     return () => clearInterval(interval);
   }, [isLoading]);
