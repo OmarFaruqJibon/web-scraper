@@ -18,6 +18,8 @@ const Homepage = () => {
     fetchData();
   }, []);
 
+  console.log(data)
+
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800 flex gap-6">
       {/* Left: Form */}

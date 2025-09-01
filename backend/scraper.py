@@ -20,40 +20,40 @@ def send_html_to_ollama(text: str, retries: int = 1):
     #     html_content = html_content[:8000]
 
     prompt = f"""
-        You are an expert in extracting data from given text.
-        Extract the following information if available:
+        You are an expert in extracting structured data from given HTML.
 
-        Extract:
-        - Name (mandatory if found)
-        - Email (if available, else null)
-        - Phone (if available, else null)
-        - Location (if available, else null)
+            Instructions:
+            - Extract each person's information from the HTML.
+            - Extract only:
+            - "name" (mandatory if found)
+            - "email" (if available, else null)
+            - "phone" (if available, else null)
+            - "location" (if available, else null)
+            - "image" (profile-related image URL from the <img> tag)
 
-        Return ONLY a JSON array of dictionaries with keys:
-        - "name"
-        - "email"
-        - "phone"
-        - "location"
+            Output rules:
+            - The output must be ONLY a valid JSON array of dictionaries.
+            - Do not explain, do not describe, do not use markdown.
+            - Do not include extra text before or after the JSON.
+            - Every object must have all 5 keys, even if values are null.
 
-        If some fields are missing, still include them with null.
-            
-        Example:
-        [
-        {{
-            "name": "John Doe",
-            "email": "john@example.com",
-            "phone": "+1-555-1234",
-            "location": "New York, USA"
-        }},
-        {{
-            "name": "Jane Smith",
-            "email": null,
-            "phone": null,
-            "location": "London, UK"
-        }}
-        ]
-
-        Do not explain anything. Just give me the JSON array or result.
+            Example output:
+            [
+            {{
+                "name": "John Doe",
+                "email": "john@example.com",
+                "phone": "+1-555-1234",
+                "location": "New York, USA",
+                "image": "https://example.com/john.jpg"
+            }},
+            {{
+                "name": "Jane Smith",
+                "email": null,
+                "phone": null,
+                "location": "London, UK",
+                "image": null
+            }}
+            ]
 
         Text:
         {text}
@@ -82,7 +82,7 @@ def send_html_to_ollama(text: str, retries: int = 1):
             
             response.raise_for_status()
             
-            print(f"\n⚡Ollama Loaded. Extraction took {elapsed:.2f} seconds\n")
+            print(f"\n⚡ Ollama Loaded. Extraction took {elapsed:.2f} seconds\n")
             
             
             
@@ -96,6 +96,7 @@ def send_html_to_ollama(text: str, retries: int = 1):
 
         data = response.json()
         raw_text = data.get("response", "").strip()
+        print(raw_text)
 
         
         # --- Try to extract valid JSON from the model output ---
@@ -168,16 +169,19 @@ def scrape_website(url: str):
         for tag in soup(["script", "style", "header", "footer", "nav"]):
             tag.decompose()
 
-        # clean_html = str(soup)
+        clean_html = str(soup)
         if soup.body:
             body_text = soup.body.get_text(separator=" ", strip=True)
+            
         else:
             body_text = str(soup)
+            
         
+        # print(clean_html)
         print("\n-----Page body prettified-----\n")
 
         # --- Send HTML to Ollama ---
-        information = send_html_to_ollama(body_text)
+        information = send_html_to_ollama(clean_html)
         
         print("\n-----Information get from Ollama-----\n")
 
