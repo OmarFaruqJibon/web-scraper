@@ -10,7 +10,7 @@ from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
 # -------- Ollama API Function --------
-def send_html_to_ollama(text: str, retries: int = 2):
+def send_html_to_ollama(text: str, retries: int = 1):
     """Send HTML to Ollama for information extraction and return structured JSON."""
 
     ollama_url = "http://localhost:11434/api/generate"
@@ -20,38 +20,45 @@ def send_html_to_ollama(text: str, retries: int = 2):
     #     html_content = html_content[:8000]
 
     prompt = f"""
-    You are an expert in extracting data from given text.
-    Extract the following information if available:
-    
-    Extract:
-    - Name (mandatory if found)
-    - Email (if available, else null)
-    - Phone (if available, else null)
-    - Location (if available, else null)
+        You are an expert in extracting data from given text.
+        Extract the following information if available:
 
-    Return ONLY a JSON array of dictionaries with keys:
-    - "name"
-    - "email"
-    - "phone"
-    - "location"
+        Extract:
+        - Name (mandatory if found)
+        - Email (if available, else null)
+        - Phone (if available, else null)
+        - Location (if available, else null)
 
-    If some fields are missing, still include them with null.
-        
-    Example:
-    [
-      {{
-        "name": "John Doe",
-        "email": "john@example.com",
-        "phone": "+1-555-1234",
-        "location": "New York, USA"
-      }}
-    ]
-    
-    Do not explain anything. Just give me the JSON array or result.
-    
-    Text:
-    {text}
-    """
+        Return ONLY a JSON array of dictionaries with keys:
+        - "name"
+        - "email"
+        - "phone"
+        - "location"
+
+        If some fields are missing, still include them with null.
+            
+        Example:
+        [
+        {{
+            "name": "John Doe",
+            "email": "john@example.com",
+            "phone": "+1-555-1234",
+            "location": "New York, USA"
+        }},
+        {{
+            "name": "Jane Smith",
+            "email": null,
+            "phone": null,
+            "location": "London, UK"
+        }}
+        ]
+
+        Do not explain anything. Just give me the JSON array or result.
+
+        Text:
+        {text}
+        """
+
 
     # headers = {"Content-Type": "application/json"}
 
@@ -62,13 +69,35 @@ def send_html_to_ollama(text: str, retries: int = 2):
     }
 
     for attempt in range(retries):
-        response = requests.post(ollama_url, json=payload)
+        
+        try:
+            print("\n-----Ollama loading-----\n")
+            
+            start_time = time.time()   #  start timer
+            response = requests.post(ollama_url, json=payload, timeout=3600)
+            end_time = time.time()     #  end timer
 
-        if not response.ok:
+            elapsed = end_time - start_time
+            
+            print(f"\nOllama Loaded. Extraction took {elapsed:.2f} seconds\n")
+            
+            response.raise_for_status()
+            
+        except requests.exceptions.RequestException as e:
+            print(f"Ollama request failed (attempt {attempt+1}): {e}")
             if attempt < retries - 1:
-                time.sleep(1)  
+                time.sleep(1)
                 continue
-            raise RuntimeError(f"{response.status_code} error: {response.text}")
+            return []
+        
+        
+        # response = requests.post(ollama_url, json=payload, timeout=900)
+
+        # if not response.ok:
+        #     if attempt < retries - 1:
+        #         time.sleep(1)  
+        #         continue
+        #     raise RuntimeError(f"{response.status_code} error: {response.text}")
 
         data = response.json()
         # print(data)
@@ -79,11 +108,13 @@ def send_html_to_ollama(text: str, retries: int = 2):
         try:
             json_match = re.search(r"\[.*?\]", raw_text, re.DOTALL)
             if json_match:
+                print(json.loads(json_match.group(0)))
                 return json.loads(json_match.group(0))
             return []
         except json.JSONDecodeError:
             cleaned = raw_text.replace("\n", " ").replace("\t", " ")
             try:
+                print(json.loads(cleaned))
                 return json.loads(cleaned)
             except:
                 return []
@@ -93,6 +124,8 @@ def send_html_to_ollama(text: str, retries: int = 2):
 # -------- Scraper Function --------
 def scrape_website(url: str):
     """Scrape website, extract information, links, and images."""
+    
+    print(f"🔎 Scraping {url} ...")
 
     try:
         # --- Selenium setup ---
@@ -111,27 +144,48 @@ def scrape_website(url: str):
         driver = webdriver.Chrome(
             service=Service(ChromeDriverManager().install()), options=options
         )
-        driver.get(url)
-        page_source = driver.page_source
-        driver.quit()
+        
+        driver.set_page_load_timeout(120)  # 2 min timeout for page load
+        
+        print("\n-----Page loaded-----\n")
+        
+        # driver.get(url)
+        # page_source = driver.page_source
+        # driver.quit()
+        
+        try:
+            driver.get(url)
+            page_source = driver.page_source
+        except Exception as e:
+            print(f"⚠️ Selenium error on {url}: {e}")
+            return {"error": f"Selenium timeout: {e}", "url": url}
+        finally:
+            driver.quit()
+        
+        
+        
 
         # --- Parse with BeautifulSoup ---
         soup = BeautifulSoup(page_source, "html.parser")
+        
+        print("\n-----Page parsed-----\n")
 
         # Clean HTML (remove scripts/styles)
         for tag in soup(["script", "style", "header", "footer", "nav"]):
             tag.decompose()
 
-        clean_html = str(soup)
-        
+        # clean_html = str(soup)
         if soup.body:
             body_text = soup.body.get_text(separator=" ", strip=True)
         else:
             body_text = str(soup)
         
+        print("\n-----Page body prettified-----\n")
 
         # --- Send HTML to Ollama ---
         information = send_html_to_ollama(body_text)
+        
+        print("\n-----Information get from Ollama-----\n")
 
         # --- Links Extraction ---
         base_domain = urlparse(url).netloc
@@ -168,9 +222,9 @@ def scrape_website(url: str):
 
 
 # -------- Example Run --------
-if __name__ == "__main__":
-    test_url = "https://duet.ac.bd/department/cse/ex-faculty-member"
-    result = scrape_website(test_url)
-    print(json.dumps(result, indent=2))
+# if __name__ == "__main__":
+#     test_url = "https://duet.ac.bd/department/cse/ex-faculty-member"
+#     result = scrape_website(test_url)
+#     print(json.dumps(result, indent=2))
     
     
