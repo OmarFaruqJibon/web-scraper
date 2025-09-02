@@ -115,6 +115,99 @@ def send_html_to_ollama(text: str, retries: int = 1):
                 return []
     return []
 
+def send_to_ollama(text: str, retries: int = 1):
+    """Send HTML to Ollama for information extraction and return structured JSON."""
+
+    ollama_url = "http://localhost:11434/api/generate"
+
+    # --- Compact prompt (system-style) ---
+    prompt = f"""
+            You are an information extraction system.
+
+            The input is cleaned HTML text where <img> tags are kept.
+
+            Your task:
+            - Extract a list of people mentioned in the text.
+            - For each person, include these fields:
+            - name
+            - title
+            - email
+            - phone
+            - location
+            - image (URL from <img> tag if related to that person)
+            - description (a string with any extra information, notes, or context about this person)
+
+            Rules:
+            - If a field is missing, use an empty string "" (do not skip it).
+            - The description field must capture any additional details, explanations, or contextual information found near that person.
+            - Only return valid JSON. Do not include explanations, notes, or text outside of the JSON.
+            - Always return a JSON array, even if only one person is found.
+
+            Example output:
+            [
+            {{
+                "name": "John Doe",
+                "email": "john@example.com",
+                "phone": "+1-555-1234",
+                "location": "New York, USA",
+                "image": "https://example.com/john.jpg",
+                "description": "This is description"
+            }},
+            {{
+                "name": "Jane Smith",
+                "email": "",
+                "phone": "",
+                "location": "London, UK",
+                "image": "",
+                "description": ""
+            }}
+            ]       
+            
+        HTML:
+        {text}
+            """
+
+    payload = {
+        "model": "llama3:latest",
+        "prompt": prompt,
+        "stream": False
+    }
+
+    for attempt in range(retries):
+        try:
+            print("\n-----Ollama loading-----\n")
+            start_time = time.time()
+
+            response = requests.post(ollama_url, json=payload, timeout=3600)
+            response.raise_for_status()
+
+            elapsed = time.time() - start_time
+            print(f"\n⚡ Ollama Loaded. Extraction took {elapsed:.2f} seconds\n")
+
+            data = response.json()
+            raw_text = data.get("response", "").strip()
+            print(raw_text)  # Debug raw response
+
+
+            # --- Strict JSON extraction ---
+            matches = re.findall(r"\[.*?\]", raw_text, re.DOTALL)
+            if matches:
+                try:
+                    parsed = json.loads(matches[0])
+                    return {"data": parsed, "raw": raw_text}
+                except json.JSONDecodeError:
+                    return {"data": [], "raw": raw_text}
+
+            # No JSON found → return raw string
+            return {"data": [], "raw": raw_text}
+
+        except (requests.exceptions.RequestException, json.JSONDecodeError) as e:
+            print(f"Ollama error (attempt {attempt+1}): {e}")
+            if attempt < retries - 1:
+                time.sleep(1)
+                continue
+            return []
+
 
 # -------- Scraper Function --------
 def scrape_website(url: str):
@@ -163,25 +256,52 @@ def scrape_website(url: str):
         # --- Parse with BeautifulSoup ---
         soup = BeautifulSoup(page_source, "html.parser")
         
+        soup_for_base_url = BeautifulSoup(page_source, "html.parser")
+        
         print("\n-----Page parsed-----\n")
 
         # Clean HTML (remove scripts/styles)
+        # for tag in soup(["script", "style", "header", "footer", "nav"]):
+        #     tag.decompose()
+
+        # clean_html = str(soup)
+        
+        # if soup.body:
+        #     body_text = soup.body.get_text(separator=" ", strip=True)
+            
+            
+        # else:
+        #     body_text = str(soup)
+            
+        
+        
         for tag in soup(["script", "style", "header", "footer", "nav"]):
             tag.decompose()
 
-        clean_html = str(soup)
         if soup.body:
-            body_text = soup.body.get_text(separator=" ", strip=True)
-            
+            body_text = ""
+            for elem in soup.body.descendants:
+                if elem.name == "img":
+                    body_text += str(elem) + " "
+                elif elem.string and elem.string.strip():
+                    body_text += elem.string.strip() + " "
         else:
             body_text = str(soup)
-            
+        
         
         # print(clean_html)
         print("\n-----Page body prettified-----\n")
 
         # --- Send HTML to Ollama ---
-        information = send_html_to_ollama(clean_html)
+        # information = send_html_to_ollama(body_text)
+        # information = ""
+        
+        print("\n----------------------------Another prompt-------------------------------\n")
+        
+        
+        information = send_to_ollama(body_text)
+        # info = ""
+        
         
         print("\n-----Information get from Ollama-----\n")
 
@@ -189,7 +309,7 @@ def scrape_website(url: str):
         base_domain = urlparse(url).netloc
         base_links, external_links = [], []
 
-        for a in soup.find_all("a", href=True):
+        for a in soup_for_base_url.find_all("a", href=True):
             abs_link = urljoin(url, a["href"])
             link_domain = urlparse(abs_link).netloc
 
@@ -203,13 +323,13 @@ def scrape_website(url: str):
                 external_links.append(abs_link)
 
         # --- Extract Image URLs ---
-        images = [urljoin(url, img["src"]) for img in soup.find_all("img", src=True)]
+        # images = [urljoin(url, img["src"]) for img in soup.find_all("img", src=True)]
 
         return {
             "url": url,
             "title": soup.title.string if soup.title else None,
             "information": information,
-            "images": list(set(images)),
+            # "images": list(set(images)),
             "base_links": list(set(base_links)),
             "external_links": list(set(external_links)),
         }
