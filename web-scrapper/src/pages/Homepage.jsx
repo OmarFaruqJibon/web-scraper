@@ -18,7 +18,7 @@ const Homepage = () => {
     fetchData();
   }, []);
 
-  console.log(data)
+  console.log(data);
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800 flex gap-6">
@@ -73,11 +73,21 @@ const Homepage = () => {
                       <table className="min-w-[800px] text-sm border-collapse">
                         <thead className="bg-gray-100 text-gray-800 sticky top-0 z-10">
                           <tr>
-                            <th className="px-4 py-3 text-left border border-gray-300">Name</th>
-                            <th className="px-4 py-3 text-left border border-gray-300">Email</th>
-                            <th className="px-4 py-3 text-left border border-gray-300">Phone</th>
-                            <th className="px-4 py-3 text-left border border-gray-300">Location</th>
-                            <th className="px-4 py-3 text-left border border-gray-300">Image</th>
+                            <th className="px-4 py-3 text-left border border-gray-300">
+                              Name
+                            </th>
+                            <th className="px-4 py-3 text-left border border-gray-300">
+                              Email
+                            </th>
+                            <th className="px-4 py-3 text-left border border-gray-300">
+                              Phone
+                            </th>
+                            <th className="px-4 py-3 text-left border border-gray-300">
+                              Location
+                            </th>
+                            <th className="px-4 py-3 text-left border border-gray-300">
+                              Image
+                            </th>
                           </tr>
                         </thead>
                         <tbody>
@@ -126,15 +136,15 @@ const Homepage = () => {
 
                               {/* Image */}
                               <td className="px-4 py-3 border border-gray-300">
-                                {info.images && info.images[i] ? (
+                                {item.image ? (
                                   <a
-                                    href={info.images[i]}
+                                    href={item.image}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                   >
                                     <img
-                                      src={info.images[i]}
-                                      alt={item.name || "Profile"}
+                                      src={item.image}
+                                      alt={item.image}
                                       className="w-12 h-12 rounded-full object-cover border"
                                     />
                                   </a>
