@@ -130,7 +130,6 @@ def send_to_ollama(text: str, retries: int = 1):
             - Extract a list of people mentioned in the text.
             - For each person, include these fields:
             - name
-            - title
             - email
             - phone
             - location
@@ -158,6 +157,14 @@ def send_to_ollama(text: str, retries: int = 1):
                 "email": "",
                 "phone": "",
                 "location": "London, UK",
+                "image": "",
+                "description": ""
+            }},
+            {{
+                "name": "Alex",
+                "email": "alex@gmail.com",
+                "phone": "",
+                "location": "",
                 "image": "",
                 "description": ""
             }}
@@ -237,9 +244,6 @@ def scrape_website(url: str):
         
         print("\n-----Page loaded-----\n")
         
-        # driver.get(url)
-        # page_source = driver.page_source
-        # driver.quit()
         
         try:
             driver.get(url)
@@ -337,12 +341,3 @@ def scrape_website(url: str):
     except Exception as e:
         print(f"Error scraping {url}: {e}")
         return {"error": str(e), "url": url}
-
-
-# -------- Example Run --------
-# if __name__ == "__main__":
-#     test_url = "https://duet.ac.bd/department/cse/ex-faculty-member"
-#     result = scrape_website(test_url)
-#     print(json.dumps(result, indent=2))
-    
-    
