@@ -167,7 +167,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
-from scrapeName import extract_names  
+from backend.test.scrapeName import extract_names  
 
 
 def scrape_website(url: str):
