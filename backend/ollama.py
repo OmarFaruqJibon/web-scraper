@@ -18,18 +18,19 @@ def send_to_ollama(text: str, retries: int = 1):
     """Send HTML to Ollama for information extraction and return structured JSON."""
 
     ollama_url = "http://localhost:11434/api/generate"
+
     prompt = f"""
-            You are an information extraction system.
+             You are an information extraction system.
 
             The input is cleaned HTML text where <img> tags are kept.
 
             Your task:
             - Extract a list of people mentioned in the text.
             - For each person, include these fields:
-            - name (string)
-            - email (array of strings, [] if none found)
-            - phone (array of strings, [] if none found)
-            - location (string, "" if none found)
+            - name
+            - email
+            - phone
+            - location
             - image (URL from <img> tag if related to that person)
             - description (a string with any extra information, notes, or context about this person)
 
@@ -43,40 +44,24 @@ def send_to_ollama(text: str, retries: int = 1):
             [
             {{
                 "name": "John Doe",
-                "email": ["john@example.com", "john2@example.com"],
-                "phone": ["+880 182232584", "01487258961"],
+                "email": "john@example.com",
+                "phone": "+1-555-1234",
                 "location": "New York, USA",
                 "image": "https://example.com/john.jpg",
                 "description": "This is description"
             }},
             {{
                 "name": "Jane Smith",
-                "email": ["jane@example.com"],
-                "phone": [],
-                "location": "London, UK",
-                "image": "",
-                "description": ""
-            }},
-            {{
-                "name": "Akhash Dev",
-                "email": []
-                "phone": ["+880 182232584", "01487258961"]
-                "location": "New York, USA",
-                "image": "https://example.com/john.jpg",
-                "description": ""
-            }},
-            {{
-                "name": "Jane Smith",
-                "email": ["jane@example.com"],
-                "phone": [],
+                "email": "",
+                "phone": "",
                 "location": "London, UK",
                 "image": "",
                 "description": ""
             }},
             {{
                 "name": "Alex",
-                "email": [],
-                "phone": ["+8801742-189270"],
+                "email": "alex@gmail.com",
+                "phone": "",
                 "location": "",
                 "image": "",
                 "description": ""
@@ -95,7 +80,7 @@ def send_to_ollama(text: str, retries: int = 1):
 
     for attempt in range(retries):
         try:
-            print("\n🔃 Ollama loading\n")
+            print("\n-----Ollama loading-----\n")
             start_time = time.time()
 
             response = requests.post(ollama_url, json=payload, timeout=3600)
@@ -108,15 +93,8 @@ def send_to_ollama(text: str, retries: int = 1):
             raw_text = data.get("response", "").strip()
             print(raw_text)  # Debug raw response
 
-            # --- First: try direct JSON parsing ---
-            try:
-                parsed = json.loads(raw_text)
-                return {"data": parsed, "raw": raw_text}
-            except json.JSONDecodeError:
-                pass  # fallback to regex
-
-            # --- Second: regex fallback ---
-            matches = re.findall(r"\[.*\]", raw_text, re.DOTALL)
+            # --- Strict JSON extraction ---
+            matches = re.findall(r"\[.*?\]", raw_text, re.DOTALL)
             if matches:
                 try:
                     parsed = json.loads(matches[0])
@@ -124,7 +102,6 @@ def send_to_ollama(text: str, retries: int = 1):
                 except json.JSONDecodeError:
                     return {"data": [], "raw": raw_text}
 
-            # --- Last resort ---
             return {"data": [], "raw": raw_text}
 
         except (requests.exceptions.RequestException, json.JSONDecodeError) as e:
@@ -132,38 +109,15 @@ def send_to_ollama(text: str, retries: int = 1):
             if attempt < retries - 1:
                 time.sleep(1)
                 continue
-            return {"data": [], "raw": ""}
-
-
-
-# -------- Helper: DOM stabilization --------
-def wait_for_stable_dom(driver, timeout=30, stable_time=2):
-    """Wait until DOM stops changing for a given stable_time (seconds)."""
-    end_time = time.time() + timeout
-    last_html = ""
-    stable_start = None
-
-    while time.time() < end_time:
-        html = driver.page_source
-        if html == last_html:
-            if stable_start is None:
-                stable_start = time.time()
-            elif time.time() - stable_start >= stable_time:
-                return True
-        else:
-            stable_start = None
-        last_html = html
-        time.sleep(0.5)
-    return False
+            return []
 
 
 # -------- Scraper Function --------
 def scrape_website(url: str):
     """Scrape website, extract information, links, and images."""
     
-    print(f"\n\n🔎 Scraping: {url} ...\n\n")
+    print(f"\n\n🔎 Scraping: {url} ...")
 
-    driver = None
     try:
         # --- Selenium setup ---
         options = Options()
@@ -182,57 +136,59 @@ def scrape_website(url: str):
             service=Service(ChromeDriverManager().install()), options=options
         )
         
-        driver.set_page_load_timeout(120)  # 2 min timeout for page load
+        driver.set_page_load_timeout(120)  # 2 min timeout
+        
+        print("\n-----Page loading-----\n")
         driver.get(url)
-        print("✅ Browser launched\n")
-        
-        # Step 1: wait until document is fully loaded
-        WebDriverWait(driver, 30).until(
-            lambda d: d.execute_script("return document.readyState") == "complete"
-        )
-        print("✅ Document ready\n")
 
-        # Step 2: wait until DOM stabilizes (backend data finished loading)
-        if wait_for_stable_dom(driver, timeout=30, stable_time=2):
-            print("✅ DOM stabilized (data loaded)\n")
-        else:
-            print("⚠️ DOM may still be loading, continuing anyway\n")
-        
+        # --- Explicit wait for dynamic content ---
+        try:
+            WebDriverWait(driver, 30).until(
+                EC.presence_of_element_located(
+                    (By.CSS_SELECTOR, ".teacher, .faculty, .profile, table, img")
+                )
+            )
+            print("✅ Dynamic content detected")
+        except Exception:
+            print("⚠️ No dynamic content detected within wait time")
+
+        # Optional: scroll down to load lazy content
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        time.sleep(2)
+
+        # Now extract final HTML
         page_source = driver.page_source
 
     except Exception as e:
         print(f"⚠️ Selenium error on {url}: {e}")
-        return {"error": f"Selenium error: {e}", "url": url}
+        return {"error": f"Selenium timeout: {e}", "url": url}
     finally:
-        if driver:
-            driver.quit()
-        
-        
+        driver.quit()
+
     # --- Parse with BeautifulSoup ---
     soup = BeautifulSoup(page_source, "html.parser")
     soup_for_base_url = BeautifulSoup(page_source, "html.parser")
-    print("\n✅ Page parsed\n")
     
-    # Remove noise
+    print("\n-----Page parsed-----\n")        
+    
     for tag in soup(["script", "style", "header", "footer", "nav"]):
         tag.decompose()
 
-    # Extract body text with inline <img> tags
     if soup.body:
-        body_text = soup.body.get_text(" ", strip=True)
-        for img in soup.find_all("img"):
-            body_text += f" <img src='{img.get('src', '')}' alt='{img.get('alt', '')}'> "
+        body_text = ""
+        for elem in soup.body.descendants:
+            if elem.name == "img":
+                body_text += str(elem) + " "
+            elif elem.string and elem.string.strip():
+                body_text += elem.string.strip() + " "
     else:
         body_text = str(soup)
-
-    print("\n✅ Body extracted\n")
-
-    # --- Send HTML to Ollama ---
+    
+    print("\n-----Page body extracted-----\n")
+    
     information = send_to_ollama(body_text)
-    
-    print("\n✅ Information received from Ollama\n")
-    
-    
+    print("\n-----Information extracted from Ollama-----\n")
+
     # --- Links Extraction ---
     base_domain = urlparse(url).netloc
     base_links, external_links = [], []

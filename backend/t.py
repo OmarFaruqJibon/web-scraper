@@ -18,6 +18,8 @@ def send_to_ollama(text: str, retries: int = 1):
     """Send HTML to Ollama for information extraction and return structured JSON."""
 
     ollama_url = "http://localhost:11434/api/generate"
+
+    # --- Compact prompt (system-style) ---
     prompt = f"""
             You are an information extraction system.
 
@@ -43,8 +45,8 @@ def send_to_ollama(text: str, retries: int = 1):
             [
             {{
                 "name": "John Doe",
-                "email": ["john@example.com", "john2@example.com"],
-                "phone": ["+880 182232584", "01487258961"],
+                "email": ["john@example.com", "john2@example.com"]
+                "phone": ["+880 182232584", "01487258961"]
                 "location": "New York, USA",
                 "image": "https://example.com/john.jpg",
                 "description": "This is description"
@@ -58,25 +60,9 @@ def send_to_ollama(text: str, retries: int = 1):
                 "description": ""
             }},
             {{
-                "name": "Akhash Dev",
-                "email": []
-                "phone": ["+880 182232584", "01487258961"]
-                "location": "New York, USA",
-                "image": "https://example.com/john.jpg",
-                "description": ""
-            }},
-            {{
-                "name": "Jane Smith",
-                "email": ["jane@example.com"],
-                "phone": [],
-                "location": "London, UK",
-                "image": "",
-                "description": ""
-            }},
-            {{
                 "name": "Alex",
-                "email": [],
-                "phone": ["+8801742-189270"],
+                "email": [+8801742-189270],
+                "phone": ,
                 "location": "",
                 "image": "",
                 "description": ""
@@ -85,7 +71,7 @@ def send_to_ollama(text: str, retries: int = 1):
             
         HTML:
         {text}
-    """
+            """
 
     payload = {
         "model": "llama3:latest",
@@ -108,15 +94,8 @@ def send_to_ollama(text: str, retries: int = 1):
             raw_text = data.get("response", "").strip()
             print(raw_text)  # Debug raw response
 
-            # --- First: try direct JSON parsing ---
-            try:
-                parsed = json.loads(raw_text)
-                return {"data": parsed, "raw": raw_text}
-            except json.JSONDecodeError:
-                pass  # fallback to regex
-
-            # --- Second: regex fallback ---
-            matches = re.findall(r"\[.*\]", raw_text, re.DOTALL)
+            # --- Strict JSON extraction ---
+            matches = re.findall(r"\[.*?\]", raw_text, re.DOTALL)
             if matches:
                 try:
                     parsed = json.loads(matches[0])
@@ -124,7 +103,7 @@ def send_to_ollama(text: str, retries: int = 1):
                 except json.JSONDecodeError:
                     return {"data": [], "raw": raw_text}
 
-            # --- Last resort ---
+            # No JSON found → return raw string
             return {"data": [], "raw": raw_text}
 
         except (requests.exceptions.RequestException, json.JSONDecodeError) as e:
@@ -132,8 +111,7 @@ def send_to_ollama(text: str, retries: int = 1):
             if attempt < retries - 1:
                 time.sleep(1)
                 continue
-            return {"data": [], "raw": ""}
-
+            return []
 
 
 # -------- Helper: DOM stabilization --------
@@ -229,10 +207,8 @@ def scrape_website(url: str):
 
     # --- Send HTML to Ollama ---
     information = send_to_ollama(body_text)
-    
     print("\n✅ Information received from Ollama\n")
-    
-    
+
     # --- Links Extraction ---
     base_domain = urlparse(url).netloc
     base_links, external_links = [], []
