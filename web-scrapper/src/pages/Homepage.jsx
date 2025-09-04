@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../callApi";
 import FormData from "./FormData";
-import { jsPDF } from "jspdf";   // <-- import jsPDF
+import { jsPDF } from "jspdf";
 
 const Homepage = () => {
   const [data, setData] = useState([]);
@@ -19,21 +19,16 @@ const Homepage = () => {
     fetchData();
   }, []);
 
-  // Convert JSON -> CSV and trigger download
+  // Convert JSON -> CSV
   const downloadCSV = (tableData, filename = "data.csv") => {
     if (!tableData || tableData.length === 0) return;
-
     const headers = Object.keys(tableData[0]);
-    const csvRows = [];
-
-    csvRows.push(headers.join(",")); // header
+    const csvRows = [headers.join(",")];
 
     for (const row of tableData) {
       const values = headers.map((header) => {
         const value = row[header];
-        if (Array.isArray(value)) {
-          return `"${value.join("; ")}"`;
-        }
+        if (Array.isArray(value)) return `"${value.join("; ")}"`;
         return `"${value ? String(value).replace(/"/g, '""') : ""}"`;
       });
       csvRows.push(values.join(","));
@@ -44,23 +39,20 @@ const Homepage = () => {
     const url = window.URL.createObjectURL(blob);
 
     const a = document.createElement("a");
-    a.setAttribute("hidden", "");
     a.href = url;
     a.download = filename;
-    document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
   };
 
-  // Convert RAW -> PDF and trigger download
+  // Convert RAW -> PDF
   const downloadPDF = (rawText, filename = "data.pdf") => {
     const doc = new jsPDF();
     const margin = 10;
     const pageHeight = doc.internal.pageSize.height;
     doc.setFontSize(12);
 
-    // Split text into pages
-    const lines = doc.splitTextToSize(rawText, 180); // wrap at ~180px
+    const lines = doc.splitTextToSize(rawText, 180);
     let y = margin;
 
     lines.forEach((line) => {
@@ -75,24 +67,70 @@ const Homepage = () => {
     doc.save(filename);
   };
 
-  console.log(data);
-
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-800 flex flex-col md:flex-row gap-6 p-4 sm:p-6">
-      {/* Left: Form */}
-      <div className="form-container w-full md:w-1/3">
-        <FormData onSuccess={fetchData} />
-      </div>
+    <div className="min-h-screen flex flex-col bg-gray-50 text-gray-900">
+      {/* Navbar */}
+      <header className="w-full px-10 py-4 flex justify-between items-center bg-white shadow-md">
+        <h1 className="text-2xl font-bold">🕷️ WebCrawler</h1>
+        {/* <nav className="space-x-6 hidden md:flex">
+          <a href="#features" className="hover:text-blue-600">
+            Features
+          </a>
+          <a href="#demo" className="hover:text-blue-600">
+            Demo
+          </a>
+        </nav> */}
+        <button style={{color: "#1DDE74"}} className="px-4 py-2 bg-gray-900 font-semibold rounded-lg shadow cursor-pointer">
+          Get Started
+        </button>
+      </header>
 
-      {/* Right: Scraped Data */}
-      <div className="w-full md:w-2/3 mx-auto mt-6 md:mt-10">
-        <h2 className="font-bold text-2xl mb-6 text-center text-gray-800">
-          Scraped Data
+      {/* Hero Section */}
+      <section className="flex flex-col items-center text-center px-6 py-20 bg-gradient-to-b from-blue-50 to-white">
+        <h2 className="text-4xl sm:text-5xl font-extrabold mt-7 mb-4">
+          Extract Any Data from Any Website
         </h2>
+        <p className="text-lg text-gray-600 max-w-2xl mb-8">
+          Paste a link and let our AI-powered scraper fetch structured data for
+          you — no coding required.
+        </p>
+        <div className="w-full max-w-xl">
+          <FormData onSuccess={fetchData} />
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section
+        id="features"
+        className="py-16 px-6 bg-gray-100 grid gap-8 sm:grid-cols-2 lg:grid-cols-3"
+      >
+        <div className="bg-white px-6 py-12 rounded-2xl shadow hover:shadow-lg transition">
+          <h3 className="text-xl font-semibold mb-2">⚡ Fast Extraction</h3>
+          <p className="text-gray-600">
+            Get results in seconds with our optimized scraping pipeline
+          </p>
+        </div>
+        <div className="bg-white  px-6 py-12  rounded-2xl shadow hover:shadow-lg transition">
+          <h3 className="text-xl font-semibold mb-2">📊 Structured Data</h3>
+          <p className="text-gray-600">
+            Emails, phones, names, locations, and more — neatly organized
+          </p>
+        </div>
+        <div className="bg-white  px-6 py-12  rounded-2xl shadow hover:shadow-lg transition">
+          <h3 className="text-xl font-semibold mb-2">⬇ Export Ready</h3>
+          <p className="text-gray-600">
+            Download your scraped data as CSV or PDF with one click
+          </p>
+        </div>
+      </section>
+
+      {/* Demo Section */}
+      <section id="demo" className="py-16 px-6">
+        <h2 className="font-bold text-3xl mb-8 text-center">Live Result</h2>
 
         {data.length === 0 ? (
           <p className="text-gray-500 italic text-center py-6 bg-white rounded-xl shadow border">
-            No data found
+            No data found. Try scraping a website!
           </p>
         ) : (
           <div className="space-y-10">
@@ -105,16 +143,16 @@ const Homepage = () => {
               return (
                 <div
                   key={infoIndex}
-                  className="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-gray-200"
+                  className="bg-white p-6 rounded-xl shadow-md border border-gray-200"
                 >
                   {/* URL + Title */}
-                  <div className="mb-4 sm:mb-6">
+                  <div className="mb-6">
                     <p className="text-sm text-gray-600 break-all">
                       <strong className="text-gray-800">🔗 URL :</strong>{" "}
                       <a
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-900 hover:underline"
+                        className="text-blue-700 hover:underline"
                         href={info.url}
                       >
                         {info.url}
@@ -126,16 +164,16 @@ const Homepage = () => {
                     </p>
                   </div>
 
-                  {/* Structured or Raw Data */}
+                  {/* Show Table if valid data */}
                   {validRows.length > 0 ? (
                     <div>
-                      {/* Download CSV Button */}
                       <div className="flex justify-end mb-2">
                         <button
                           onClick={() =>
                             downloadCSV(
                               validRows,
-                              `scraped_data_${infoIndex + 1}.csv`
+                              // `scraped_data_${infoIndex + 1}.csv`
+                              `${info.title}.csv`
                             )
                           }
                           className="px-4 py-1.5 bg-gray-900 text-white text-sm rounded-lg shadow hover:bg-gray-950 transition cursor-pointer"
@@ -149,68 +187,50 @@ const Homepage = () => {
                           <table className="min-w-[1000px] text-xs sm:text-sm border-collapse">
                             <thead className="bg-gray-100 text-gray-800 sticky top-0 z-10">
                               <tr>
-                                <th className="px-4 py-3 text-left border border-gray-300">Name</th>
-                                <th className="px-4 py-3 text-left border border-gray-300">Email</th>
-                                <th className="px-4 py-3 text-left border border-gray-300">Phone</th>
-                                <th className="px-4 py-3 text-left border border-gray-300">Location</th>
-                                <th className="px-4 py-3 text-left border border-gray-300">Image</th>
-                                <th className="px-4 py-3 text-left border border-gray-300">Description</th>
+                                <th className="px-4 py-3 border">Name</th>
+                                <th className="px-4 py-3 border">Email</th>
+                                <th className="px-4 py-3 border">Phone</th>
+                                <th className="px-4 py-3 border">Location</th>
+                                <th className="px-4 py-3 border">Image</th>
+                                <th className="px-4 py-3 border">Description</th>
                               </tr>
                             </thead>
                             <tbody>
                               {validRows.map((item, i) => (
-                                <tr
-                                  key={i}
-                                  className="odd:bg-white even:bg-gray-50 hover:bg-gray-100 transition"
-                                >
-                                  <td className="px-4 py-3 border border-gray-300">{item.name}</td>
-
-                                  {/* Email */}
-                                  <td className="px-4 py-3 border border-gray-300">
-                                    {item.email && item.email.length > 0 ? (
-                                      item.email.map((em, idx) => (
-                                        <p key={idx}>
-                                          <a
-                                            href={`mailto:${em}`}
-                                            className="text-blue-700 hover:underline"
-                                          >
-                                            {em}
-                                          </a>
-                                        </p>
-                                      ))
-                                    ) : (
-                                      "N/A"
-                                    )}
+                                <tr key={i} className="odd:bg-white even:bg-gray-50">
+                                  <td className="px-4 py-3 border">{item.name}</td>
+                                  <td className="px-4 py-3 border">
+                                    {item.email?.length > 0
+                                      ? item.email.map((em, idx) => (
+                                          <p key={idx}>
+                                            <a
+                                              href={`mailto:${em}`}
+                                              className="text-blue-700 hover:underline"
+                                            >
+                                              {em}
+                                            </a>
+                                          </p>
+                                        ))
+                                      : "N/A"}
                                   </td>
-
-                                  {/* Phone */}
-                                  <td className="px-4 py-3 border border-gray-300">
-                                    {item.phone && item.phone.length > 0 ? (
-                                      item.phone.map((ph, idx) => (
-                                        <p key={idx}>
-                                          <a
-                                            href={`tel:${ph}`}
-                                            className="text-green-700 hover:underline"
-                                          >
-                                            {ph}
-                                          </a>
-                                        </p>
-                                      ))
-                                    ) : (
-                                      "N/A"
-                                    )}
+                                  <td className="px-4 py-3 border">
+                                    {item.phone?.length > 0
+                                      ? item.phone.map((ph, idx) => (
+                                          <p key={idx}>
+                                            <a
+                                              href={`tel:${ph}`}
+                                              className="text-green-700 hover:underline"
+                                            >
+                                              {ph}
+                                            </a>
+                                          </p>
+                                        ))
+                                      : "N/A"}
                                   </td>
-
-                                  <td className="px-4 py-3 border border-gray-300">
-                                    {item.location || "N/A"}
-                                  </td>
-                                  <td className="px-4 py-3 border border-gray-300">
+                                  <td className="px-4 py-3 border">{item.location || "N/A"}</td>
+                                  <td className="px-4 py-3 border">
                                     {item.image ? (
-                                      <a
-                                        href={item.image}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                      >
+                                      <a href={item.image} target="_blank" rel="noreferrer">
                                         <img
                                           src={item.image}
                                           alt={item.name || "profile"}
@@ -221,9 +241,7 @@ const Homepage = () => {
                                       "N/A"
                                     )}
                                   </td>
-                                  <td className="px-4 py-3 border border-gray-300">
-                                    {item.description || "N/A"}
-                                  </td>
+                                  <td className="px-4 py-3 border">{item.description || "N/A"}</td>
                                 </tr>
                               ))}
                             </tbody>
@@ -233,13 +251,13 @@ const Homepage = () => {
                     </div>
                   ) : info?.information?.raw ? (
                     <div>
-                      {/* Download PDF Button */}
                       <div className="flex justify-end mb-2">
                         <button
                           onClick={() =>
                             downloadPDF(
                               info.information.raw,
-                              `scraped_raw_${infoIndex + 1}.pdf`
+                              // `scraped_raw_${infoIndex + 1}.pdf`
+                              `${info.title}.pdf`
                             )
                           }
                           className="px-4 py-1.5 bg-gray-900 text-white text-sm rounded-lg shadow hover:bg-gray-950 transition cursor-pointer"
@@ -247,9 +265,7 @@ const Homepage = () => {
                           ⬇ Download PDF
                         </button>
                       </div>
-
-                      {/* Show RAW */}
-                      <pre className="text-xs sm:text-sm text-left p-4 rounded-lg overflow-x-auto max-h-[500px] whitespace-pre-wrap shadow-inner">
+                      <pre className="text-xs sm:text-sm p-4 bg-gray-50 border rounded-lg max-h-[500px] overflow-auto whitespace-pre-wrap">
                         {info.information.raw}
                       </pre>
                     </div>
@@ -263,7 +279,12 @@ const Homepage = () => {
             })}
           </div>
         )}
-      </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="mt-auto py-6 bg-white border-t text-center text-gray-600 text-sm">
+        © {new Date().getFullYear()} WebScraper. All rights reserved.
+      </footer>
     </div>
   );
 };
