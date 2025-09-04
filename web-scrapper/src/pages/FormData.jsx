@@ -22,7 +22,7 @@ const FormData = ({ onSuccess }) => {
         } catch (err) {
           console.error("Error fetching progress", err);
         }
-      }, 30000); // poll every 2s
+      }, 5000); // poll every 2s
     }
     return () => clearInterval(interval);
   }, [isLoading]);
@@ -43,7 +43,7 @@ const FormData = ({ onSuccess }) => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-lg">
+      <div className="w-full max-w-lg bg-white rounded-2xl shadow-lg px-3 py-10">
         <h2 className="text-2xl font-bold text-gray-800 mb-10 text-center">
           Web Scraper
         </h2>
