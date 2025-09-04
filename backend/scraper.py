@@ -31,7 +31,7 @@ def send_to_ollama(text: str, retries: int = 1):
             - phone (array of strings, [] if none found)
             - location (string, "" if none found)
             - image (URL from <img> tag if related to that person)
-            - description (a string with any extra information, notes, or context about this person)
+            - description (a well-written summary about the person that combines all available details: roles, contact information, achievements, affiliations, titles, expertise, education, publications, responsibilities, or any other personal/professional context found in the text. If only limited info is available, still write a complete sentence describing them with what is known)
 
             Rules:
             - If a field is missing, use an empty string "" (do not skip it).
@@ -98,7 +98,7 @@ def send_to_ollama(text: str, retries: int = 1):
             print("\n🔃 Ollama loading\n")
             start_time = time.time()
 
-            response = requests.post(ollama_url, json=payload, timeout=3600)
+            response = requests.post(ollama_url, json=payload, timeout=1800)
             response.raise_for_status()
 
             elapsed = time.time() - start_time
