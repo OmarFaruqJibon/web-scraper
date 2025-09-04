@@ -252,7 +252,7 @@ def scrape_website(url: str):
 
     return {
         "url": url,
-        "title": soup.title.string if soup.title else None,
+        "title": soup.title.string.strip() if soup.title else None,
         "information": information,
         "base_links": list(set(base_links)),
         "external_links": list(set(external_links)),
