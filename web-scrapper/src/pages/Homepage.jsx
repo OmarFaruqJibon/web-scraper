@@ -96,180 +96,171 @@ const Homepage = () => {
           </p>
         ) : (
           <div className="space-y-10">
-            {data.map((info, infoIndex) => (
-              <div
-                key={infoIndex}
-                className="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-gray-200"
-              >
-                {/* URL + Title */}
-                <div className="mb-4 sm:mb-6">
-                  <p className="text-sm text-gray-600 break-all">
-                    <strong className="text-gray-800">🔗 URL :</strong>{" "}
-                    <a
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-900 hover:underline"
-                      href={info.url}
-                    >
-                      {info.url}
-                    </a>
-                  </p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    <strong className="text-gray-800">Title :</strong>{" "}
-                    {info.title || "Title not found!"}
-                  </p>
-                </div>
+            {data.map((info, infoIndex) => {
+              const validRows =
+                info?.information?.data?.filter(
+                  (item) => item.name && item.name.trim() !== ""
+                ) || [];
 
-                {/* If structured data */}
-                {info?.information?.data?.length > 0 ? (
-                  <div>
-                    {/* Download CSV Button */}
-                    <div className="flex justify-end mb-2">
-                      <button
-                        onClick={() =>
-                          downloadCSV(
-                            info.information.data,
-                            `scraped_data_${infoIndex + 1}.csv`
-                          )
-                        }
-                        className="px-4 py-1.5 bg-gray-900 text-white text-sm rounded-lg shadow hover:bg-gray-950 transition cursor-pointer"
+              return (
+                <div
+                  key={infoIndex}
+                  className="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-gray-200"
+                >
+                  {/* URL + Title */}
+                  <div className="mb-4 sm:mb-6">
+                    <p className="text-sm text-gray-600 break-all">
+                      <strong className="text-gray-800">🔗 URL :</strong>{" "}
+                      <a
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-900 hover:underline"
+                        href={info.url}
                       >
-                        ⬇ Download CSV
-                      </button>
-                    </div>
+                        {info.url}
+                      </a>
+                    </p>
+                    <p className="text-sm text-gray-600 mt-1">
+                      <strong className="text-gray-800">Title :</strong>{" "}
+                      {info.title || "Title not found!"}
+                    </p>
+                  </div>
 
-                    <div className="overflow-x-auto">
-                      <div className="max-h-[500px] overflow-y-auto w-full border border-gray-300 rounded-lg">
-                        <table className="min-w-[1000px] text-xs sm:text-sm border-collapse">
-                          <thead className="bg-gray-100 text-gray-800 sticky top-0 z-10">
-                            <tr>
-                              <th className="px-4 py-3 text-left border border-gray-300">
-                                Name
-                              </th>
-                              <th className="px-4 py-3 text-left border border-gray-300">
-                                Email
-                              </th>
-                              <th className="px-4 py-3 text-left border border-gray-300">
-                                Phone
-                              </th>
-                              <th className="px-4 py-3 text-left border border-gray-300">
-                                Location
-                              </th>
-                              <th className="px-4 py-3 text-left border border-gray-300">
-                                Image
-                              </th>
-                              <th className="px-4 py-3 text-left border border-gray-300">
-                                Description
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {info.information.data.map((item, i) => (
-                              <tr
-                                key={i}
-                                className="odd:bg-white even:bg-gray-50 hover:bg-gray-100 transition"
-                              >
-                                <td className="px-4 py-3 border border-gray-300">
-                                  {item.name || "N/A"}
-                                </td>
+                  {/* Structured or Raw Data */}
+                  {validRows.length > 0 ? (
+                    <div>
+                      {/* Download CSV Button */}
+                      <div className="flex justify-end mb-2">
+                        <button
+                          onClick={() =>
+                            downloadCSV(
+                              validRows,
+                              `scraped_data_${infoIndex + 1}.csv`
+                            )
+                          }
+                          className="px-4 py-1.5 bg-gray-900 text-white text-sm rounded-lg shadow hover:bg-gray-950 transition cursor-pointer"
+                        >
+                          ⬇ Download CSV
+                        </button>
+                      </div>
 
-                                {/* Email */}
-                                <td className="px-4 py-3 border border-gray-300">
-                                  {item.email ? (
-                                    item?.email?.map((em, idx) => (
-                                      <p key={idx}>
-                                        <a
-                                          href={`mailto:${em}`}
-                                          className="text-blue-700 hover:underline"
-                                        >
-                                          {em}
-                                        </a>
-                                        <br />
-                                      </p>
-                                    ))
-                                  ) : (
-                                    "N/A"
-                                  )}
-                                </td>
-
-                                {/* Phone */}
-                                <td className="px-4 py-3 border border-gray-300">
-                                  {item?.phone ? (
-                                    item?.phone?.map((ph, idx) => (
-                                      <p key={idx}>
-                                        <a
-                                          href={`tel:${ph}`}
-                                          className="text-green-700 hover:underline"
-                                        >
-                                          {ph}
-                                        </a>
-                                        <br />
-                                      </p>
-                                    ))
-                                  ) : (
-                                    "N/A"
-                                  )}
-                                </td>
-
-                                <td className="px-4 py-3 border border-gray-300">
-                                  {item.location || "N/A"}
-                                </td>
-                                <td className="px-4 py-3 border border-gray-300">
-                                  {item.image ? (
-                                    <a
-                                      href={item.image}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                    >
-                                      <img
-                                        src={item.image}
-                                        alt={item.name || "profile"}
-                                        className="w-12 h-12 rounded-full object-cover border"
-                                      />
-                                    </a>
-                                  ) : (
-                                    "N/A"
-                                  )}
-                                </td>
-                                <td className="px-4 py-3 border border-gray-300">
-                                  {item.description || "N/A"}
-                                </td>
+                      <div className="overflow-x-auto">
+                        <div className="max-h-[500px] overflow-y-auto w-full border border-gray-300 rounded-lg">
+                          <table className="min-w-[1000px] text-xs sm:text-sm border-collapse">
+                            <thead className="bg-gray-100 text-gray-800 sticky top-0 z-10">
+                              <tr>
+                                <th className="px-4 py-3 text-left border border-gray-300">Name</th>
+                                <th className="px-4 py-3 text-left border border-gray-300">Email</th>
+                                <th className="px-4 py-3 text-left border border-gray-300">Phone</th>
+                                <th className="px-4 py-3 text-left border border-gray-300">Location</th>
+                                <th className="px-4 py-3 text-left border border-gray-300">Image</th>
+                                <th className="px-4 py-3 text-left border border-gray-300">Description</th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                            </thead>
+                            <tbody>
+                              {validRows.map((item, i) => (
+                                <tr
+                                  key={i}
+                                  className="odd:bg-white even:bg-gray-50 hover:bg-gray-100 transition"
+                                >
+                                  <td className="px-4 py-3 border border-gray-300">{item.name}</td>
+
+                                  {/* Email */}
+                                  <td className="px-4 py-3 border border-gray-300">
+                                    {item.email && item.email.length > 0 ? (
+                                      item.email.map((em, idx) => (
+                                        <p key={idx}>
+                                          <a
+                                            href={`mailto:${em}`}
+                                            className="text-blue-700 hover:underline"
+                                          >
+                                            {em}
+                                          </a>
+                                        </p>
+                                      ))
+                                    ) : (
+                                      "N/A"
+                                    )}
+                                  </td>
+
+                                  {/* Phone */}
+                                  <td className="px-4 py-3 border border-gray-300">
+                                    {item.phone && item.phone.length > 0 ? (
+                                      item.phone.map((ph, idx) => (
+                                        <p key={idx}>
+                                          <a
+                                            href={`tel:${ph}`}
+                                            className="text-green-700 hover:underline"
+                                          >
+                                            {ph}
+                                          </a>
+                                        </p>
+                                      ))
+                                    ) : (
+                                      "N/A"
+                                    )}
+                                  </td>
+
+                                  <td className="px-4 py-3 border border-gray-300">
+                                    {item.location || "N/A"}
+                                  </td>
+                                  <td className="px-4 py-3 border border-gray-300">
+                                    {item.image ? (
+                                      <a
+                                        href={item.image}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                      >
+                                        <img
+                                          src={item.image}
+                                          alt={item.name || "profile"}
+                                          className="w-12 h-12 rounded-full object-cover border"
+                                        />
+                                      </a>
+                                    ) : (
+                                      "N/A"
+                                    )}
+                                  </td>
+                                  <td className="px-4 py-3 border border-gray-300">
+                                    {item.description || "N/A"}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ) : info?.information?.raw ? (
-                  <div>
-                    {/* Download PDF Button */}
-                    <div className="flex justify-end mb-2">
-                      <button
-                        onClick={() =>
-                          downloadPDF(
-                            info.information.raw,
-                            `scraped_raw_${infoIndex + 1}.pdf`
-                          )
-                        }
-                        className="px-4 py-1.5 bg-gray-900 text-white text-sm rounded-lg shadow hover:bg-gray-950 transition cursor-pointer"
-                      >
-                        ⬇ Download PDF
-                      </button>
-                    </div>
+                  ) : info?.information?.raw ? (
+                    <div>
+                      {/* Download PDF Button */}
+                      <div className="flex justify-end mb-2">
+                        <button
+                          onClick={() =>
+                            downloadPDF(
+                              info.information.raw,
+                              `scraped_raw_${infoIndex + 1}.pdf`
+                            )
+                          }
+                          className="px-4 py-1.5 bg-gray-900 text-white text-sm rounded-lg shadow hover:bg-gray-950 transition cursor-pointer"
+                        >
+                          ⬇ Download PDF
+                        </button>
+                      </div>
 
-                    {/* Show RAW */}
-                    <pre className="text-xs sm:text-sm text-left p-4 rounded-lg overflow-x-auto max-h-[500px] whitespace-pre-wrap shadow-inner">
-                      {info.information.raw}
-                    </pre>
-                  </div>
-                ) : (
-                  <p className="text-gray-500 italic">
-                    No structured or raw data available.
-                  </p>
-                )}
-              </div>
-            ))}
+                      {/* Show RAW */}
+                      <pre className="text-xs sm:text-sm text-left p-4 rounded-lg overflow-x-auto max-h-[500px] whitespace-pre-wrap shadow-inner">
+                        {info.information.raw}
+                      </pre>
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 italic">
+                      No structured or raw data available.
+                    </p>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

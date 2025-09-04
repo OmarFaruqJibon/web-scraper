@@ -66,7 +66,7 @@ const FormData = ({ onSuccess }) => {
           <button
             type="submit"
             disabled={isLoading}
-            className={`w-full font-medium py-3 rounded-xl shadow-md transition-all duration-300 relative overflow-hidden ${
+            className={`w-full font-medium py-2 rounded-xl shadow-md transition-all duration-300 relative overflow-hidden ${
               isLoading
                 ? "bg-gray-400 cursor-not-allowed"
                 : "bg-indigo-600 hover:bg-indigo-700 text-white"
