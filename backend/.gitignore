@@ -3,3 +3,5 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+train_model/html_pages
+train_model/html_pages_bd

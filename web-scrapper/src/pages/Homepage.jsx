@@ -265,7 +265,7 @@ const Homepage = () => {
                           ⬇ Download PDF
                         </button>
                       </div>
-                      <pre className="text-xs sm:text-sm p-4 bg-gray-50 border rounded-lg max-h-[500px] overflow-auto whitespace-pre-wrap">
+                      <pre className="text-xs sm:text-sm text-left p-4 bg-gray-50 border rounded-lg max-h-[400px] overflow-auto whitespace-pre-wrap">
                         {info.information.raw}
                       </pre>
                     </div>
