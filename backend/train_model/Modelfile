@@ -1,0 +1,4 @@
+FROM llama3:latest
+
+# LoRA fine-tuning on your dataset
+PARAMETER lora dataset/dataset.jsonl
