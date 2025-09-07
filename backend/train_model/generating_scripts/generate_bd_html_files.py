@@ -5,7 +5,7 @@ from faker import Faker
 # Faker with English but for Bangladesh
 fake = Faker("en_US")
 
-OUTPUT_DIR = "html_pages_bd"
+OUTPUT_DIR = "../html_pages_bd"
 
 HTML_TEMPLATE = """<html>
 <head><title>Profile</title></head>
@@ -88,5 +88,5 @@ def generate_html_files(num_files: int, output_dir=OUTPUT_DIR):
         print(f"Generated: {file_path}")
 
 if __name__ == "__main__":
-    NUM_FILES = 300   # Set how many profiles you want
+    NUM_FILES = 400  
     generate_html_files(NUM_FILES)

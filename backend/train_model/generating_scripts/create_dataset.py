@@ -4,13 +4,14 @@ import json
 import spacy
 import requests
 from bs4 import BeautifulSoup
+import time
 
 # Load spaCy NLP model
 nlp = spacy.load("en_core_web_sm")
 
 # Input/Output
-HTML_DIR = "html_pages_bd"
-OUTPUT_FILE = "dataset.jsonl"
+HTML_DIR = "../html_pages_bd"
+OUTPUT_FILE = "../dataset/dataset.jsonl"
 
 # Ollama settings
 OLLAMA_MODEL = "llama3:latest"
@@ -138,6 +139,8 @@ def create_dataset():
         path = os.path.join(HTML_DIR, filename)
         with open(path, "r", encoding="utf-8") as f:
             html_content = f.read()
+        
+        start_time = time.time()
 
         # Extract text + image
         text_with_imgs, plain_text, image_url = extract_text_and_imgs(html_content)
@@ -164,7 +167,8 @@ def create_dataset():
 
         dataset.append(entry)
         count +=1
-        print(f"\n{count} Object inserted to dataset.\n")
+        elapsed = time.time() - start_time
+        print(f"\n{count} Object inserted to dataset. Took {elapsed:.2f} seconds\n")
 
     # Save JSONL
     with open(OUTPUT_FILE, "a", encoding="utf-8") as f:
