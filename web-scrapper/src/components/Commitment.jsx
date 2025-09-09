@@ -1,26 +1,27 @@
 // src/components/Commitment.jsx
 import { motion } from "framer-motion";
-import { Shield, Users, TrendingUp } from "lucide-react";
+import { Sparkles, ChartColumnDecreasing, Download } from "lucide-react";
+import Workflow from "../assets/Workflow.png";
 
 const Commitment = () => {
   const commitments = [
-    {
-      icon: <Shield className="text-blue-400" size={36} />,
-      title: "Business Compliance and Development",
+    { 
+      icon: <Sparkles className="text-blue-400" size={36} />,
+      title: "Fast Extraction",
       description:
-        "Ensure that employees are secure with our comprehensive compliance framework.",
+        "Get results in seconds with our optimized scraping pipeline",
     },
-    {
-      icon: <Users className="text-purple-400" size={36} />,
-      title: "Working Skills",
+    { 
+      icon: <ChartColumnDecreasing className="text-purple-400" size={36} />,
+      title: "Structured Data",
       description:
-        "Empower your team with AI-enhanced skills development and training.",
+        "Emails, phones, names, locations, and more — neatly organized",
     },
-    {
-      icon: <TrendingUp className="text-pink-400" size={36} />,
-      title: "Intelligent Builders",
+    { 
+      icon: <Download className="text-pink-400" size={36} />,
+      title: "Export Ready",
       description:
-        "Leverage our AI tools to build smarter business solutions faster.",
+        "Download your scraped data as CSV or PDF with one click",
     },
   ];
 
@@ -33,7 +34,7 @@ const Commitment = () => {
       <div
         className="absolute inset-0 
         bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)]
-        [background-size:40px_40px]"
+        [background-size:60px_60px]"
       ></div>
 
       <div className="max-w-7xl mx-auto relative z-10">
@@ -46,11 +47,10 @@ const Commitment = () => {
           className="text-center mb-16"
         >
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Our Commitment to Excellence
+            No Code Required - Easy Integration
           </h2>
           <p className="text-gray-400 max-w-3xl mx-auto">
-            We provide the tools and expertise to transform your business
-            through AI-powered solutions.
+            Start instantly without writing code. Your automation tools can seamlessly connect to our powerful extraction engine.
           </p>
         </motion.div>
 
@@ -81,22 +81,19 @@ const Commitment = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="mt-20 relative bg-slate-900/60 backdrop-blur-xl rounded-2xl p-10 text-center border border-slate-700/50"
+          className="flex items-center gap-8 mt-20 relative bg-slate-900/60 backdrop-blur-xl rounded-2xl p-6 text-center border border-slate-700/50"
         >
-          <h3 className="text-2xl font-bold mb-4 text-white">
-            Improve, Supply, and Customer Controls
+          <div>
+            <h3 className="text-2xl text-left font-bold mb-4 text-white">
+            Natural Language Workflow Orchestration
           </h3>
-          <p className="text-gray-400 mb-8">
-            To ensure that employees are secure and your business operations are
-            optimized.
+          <p className="text-gray-400 text-left">
+            Design data workflows with nodes and prompts—no coding needed. More accurate <br />  than Agents, smarter than RPA, 90% cheaper.
           </p>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-3 rounded-full font-medium shadow-lg hover:shadow-blue-500/30 transition"
-          >
-            Learn More
-          </motion.button>
+          </div>
+          <div>
+            <img width={550} src={Workflow} alt="Workflow_diagram" />
+          </div>
         </motion.div>
       </div>
     </section>

@@ -8,7 +8,7 @@ const HeroSection = ({ isLoaded, fetchData }) => {
       {/* Background Grid Pattern */}
       <div className="absolute inset-0 
         bg-[linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.05)_1px,transparent_1px)]
-        [background-size:40px_40px]">
+        [background-size:60px_60px]">
       </div>
 
       {/* Glow Effects */}

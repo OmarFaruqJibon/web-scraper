@@ -14,6 +14,9 @@ const Pricing = () => {
         "10GB storage",
         "Email support",
         "Basic reporting",
+        "No API Access",
+        "No Integrations"
+
       ],
       highlighted: false,
     },
@@ -43,7 +46,6 @@ const Pricing = () => {
         "24/7 dedicated support",
         "Custom reporting",
         "Full API access",
-        "White-label options",
         "Onboarding assistance",
       ],
       highlighted: false,
@@ -59,7 +61,7 @@ const Pricing = () => {
       <div
         className="absolute inset-0 
         bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)]
-        [background-size:40px_40px]"
+        [background-size:60px_60px]"
       ></div>
 
       <div className="max-w-7xl mx-auto relative z-10">
