@@ -18,6 +18,7 @@ def send_to_ollama(text: str, retries: int = 1):
     """Send HTML to Ollama for information extraction and return structured JSON."""
 
     ollama_url = "http://localhost:11434/api/generate"
+    
     prompt = f"""
             You are an information extraction system.
 
@@ -86,9 +87,15 @@ def send_to_ollama(text: str, retries: int = 1):
         HTML:
         {text}
     """
+    
+    # prompt = f"HTML:\n{text}"
 
     payload = {
-        "model": "llama3:latest",
+        "model": "llama3:8b",
+        # "model": "deepseek-r1:8b",
+        # "model": "llama3.2:3b",
+        # "model": "crawler:latest",
+        # "model": "crawler_2:latest",
         "prompt": prompt,
         "stream": False
     }
@@ -226,9 +233,14 @@ def scrape_website(url: str):
         body_text = str(soup)
 
     print("\n✅ Body extracted\n")
+    
+    print(body_text)
+    
+    print("\n\n--------------------------\n\n")
 
     # --- Send HTML to Ollama ---
     information = send_to_ollama(body_text)
+    
     
     print("\n✅ Information received from Ollama\n")
     
@@ -257,3 +269,11 @@ def scrape_website(url: str):
         "base_links": list(set(base_links)),
         "external_links": list(set(external_links)),
     }
+
+
+
+
+
+
+
+
