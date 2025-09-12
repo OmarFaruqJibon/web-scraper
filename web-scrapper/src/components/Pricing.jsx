@@ -6,7 +6,7 @@ const Pricing = () => {
   const plans = [
     {
       name: "Starter",
-      price: "$49",
+      price: "$0",
       period: "per month",
       features: [
         "Basic AI analytics",
@@ -22,7 +22,7 @@ const Pricing = () => {
     },
     {
       name: "Professional",
-      price: "$99",
+      price: "$20",
       period: "per month",
       features: [
         "Advanced AI analytics",
