@@ -2,11 +2,13 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, XCircle, ExternalLink, Sparkles } from "lucide-react";
 import api from "../callApi";
+import { useNavigate } from "react-router-dom";
 
 const FormData = ({ onSuccess }) => {
   const [url, setUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(null);
+const navigate = useNavigate();
 
   useEffect(() => {
     let interval;
@@ -37,6 +39,8 @@ const FormData = ({ onSuccess }) => {
     try {
       await api.post("/crawl", { url });
       setUrl("");
+      // Redirect to results page with state indicating we came from scraping
+      navigate("/results", { state: { fromScrape: true } });
     } catch (error) {
       console.error("Error starting crawl", error);
       setIsLoading(false);

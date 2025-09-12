@@ -1,14 +1,77 @@
-const DemoSection = ({ data, downloadCSV, downloadPDF }) => {
-  console.log(data)
-  return (
-    <section id="demo" className="py-16 px-6 relative">
-      <div className="absolute -top-20 left-0 w-full h-20 bg-gradient-to-b from-transparent to-gray-900"></div>
+import { useState } from 'react';
 
-      <h2 className="font-bold text-3xl mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-emerald-400">
-        Live Result
-      </h2>
+const DemoSection = ({ data, fetchData }) => {
+  const [downloading, setDownloading] = useState(false);
 
-      {data.length === 0 ? (
+  // Download CSV function
+  const downloadCSV = (rows, filename) => {
+    setDownloading(true);
+    
+    // Create CSV content
+    const headers = ['Name', 'Email', 'Phone', 'Location', 'Image', 'Description'];
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => [
+        `"${(row.name || '').replace(/"/g, '""')}"`,
+        `"${(row.email || []).join('; ').replace(/"/g, '""')}"`,
+        `"${(row.phone || []).join('; ').replace(/"/g, '""')}"`,
+        `"${(row.location || '').replace(/"/g, '""')}"`,
+        `"${(row.image || '').replace(/"/g, '""')}"`,
+        `"${(row.description || '').replace(/"/g, '""')}"`
+      ].join(','))
+    ].join('\n');
+
+    // Create download link
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    setTimeout(() => {
+      setDownloading(false);
+    }, 1000);
+  };
+
+  // Download PDF function
+  const downloadPDF = (content, filename) => {
+    setDownloading(true);
+    
+    // Create a simple text-based PDF representation
+    const pdfContent = `PDF Export\n\n${content}`;
+    const blob = new Blob([pdfContent], { type: 'application/pdf' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    setTimeout(() => {
+      setDownloading(false);
+    }, 1000);
+  };
+
+  // Handle case where there's no data
+  if (!data || data.length === 0) {
+    return (
+      <section id="demo" className="py-16 px-6 relative">
+        <div className="absolute -top-20 left-0 w-full h-20 bg-gradient-to-b from-transparent to-gray-900"></div>
+
+        <h2 className="font-bold text-3xl mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-emerald-400">
+          Live Result
+        </h2>
+
         <div className="text-gray-400 text-center py-12 bg-gray-800/60 backdrop-blur-md rounded-2xl shadow-lg border border-gray-700/50">
           <div className="w-20 h-20 mx-auto mb-4 bg-gray-700/50 rounded-full flex items-center justify-center">
             <svg
@@ -26,160 +89,178 @@ const DemoSection = ({ data, downloadCSV, downloadPDF }) => {
               />
             </svg>
           </div>
-          <p>No data found. Try scraping a website!</p>
+          <p>No data found. Try scraping a website from the homepage!</p>
+          <button
+            onClick={fetchData}
+            className="mt-4 px-4 py-2 bg-gradient-to-r from-cyan-600 to-emerald-600 text-white rounded-lg hover:from-cyan-500 hover:to-emerald-500 transition-all duration-300"
+          >
+            Refresh Data
+          </button>
         </div>
-      ) : (
-        <div className="space-y-10">
-          {data.map((info, infoIndex) => {
-            const validRows =
-              info?.information?.data?.filter(
-                (item) => item.name && item.name.trim() !== ""
-              ) || [];
+      </section>
+    );
+  }
 
-            return (
-              <div
-                key={infoIndex}
-                className="bg-gray-800/60 backdrop-blur-md p-6 rounded-2xl shadow-lg border border-gray-700/50 transition-all duration-300 hover:shadow-cyan-500/10"
-              >
-                {/* URL + Title */}
-                <div className="mb-6">
-                  <p className="text-sm text-gray-400 break-all">
-                    <strong className="text-gray-300">🔗 URL :</strong>{" "}
-                    <a
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-cyan-400 hover:text-cyan-300 hover:underline transition-colors"
-                      href={info.url}
-                    >
-                      {info.url}
-                    </a>
-                  </p>
-                  <p className="text-sm text-gray-400 mt-1">
-                    <strong className="text-gray-300">Title :</strong>{" "}
-                    {info.title || "Title not found!"}
-                  </p>
-                </div>
+  return (
+    <section id="demo" className="py-16 px-6 relative">
+      <div className="absolute -top-20 left-0 w-full h-20 bg-gradient-to-b from-transparent to-gray-900"></div>
 
-                {/* Table or PDF */}
-                {validRows.length > 0 ? (
-                  <div>
-                    <div className="flex justify-end mb-2">
-                      <button
-                        onClick={() =>
-                          downloadCSV(validRows, `${info.title}.csv`)
-                        }
-                        className="px-4 py-1.5 bg-gradient-to-r from-cyan-600 to-emerald-600 text-white text-sm rounded-lg shadow hover:from-cyan-500 hover:to-emerald-500 transition-all duration-300 transform hover:-translate-y-0.5 cursor-pointer"
-                      >
-                        ⬇ Download CSV
-                      </button>
-                    </div>
+      <h2 className="font-bold text-3xl mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-emerald-400">
+        Live Result
+      </h2>
 
-                    <div className="overflow-x-auto">
-                      <div className="max-h-[500px] overflow-y-auto w-full border border-gray-700 rounded-lg">
-                        <table className="min-w-[1000px] text-xs sm:text-sm border-collapse">
-                          <thead className="bg-gray-700 text-gray-200 sticky top-0 z-10">
-                            <tr>
-                              <th className="px-4 py-3 border border-gray-600">Name</th>
-                              <th className="px-4 py-3 border border-gray-600">Email</th>
-                              <th className="px-4 py-3 border border-gray-600">Phone</th>
-                              <th className="px-4 py-3 border border-gray-600">Location</th>
-                              <th className="px-4 py-3 border border-gray-600">Image</th>
-                              <th className="px-4 py-3 border border-gray-600">Description</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {validRows.map((item, i) => (
-                              <tr
-                                key={i}
-                                className="odd:bg-gray-800 even:bg-gray-700/50"
-                              >
-                                <td className="px-4 py-3 border border-gray-600">
-                                  {item.name}
-                                </td>
-                                <td className="px-4 py-3 border border-gray-600">
-                                  {item.email?.length > 0
-                                    ? item.email.map((em, idx) => (
-                                        <p key={idx}>
-                                          <a
-                                            href={`mailto:${em}`}
-                                            className="text-cyan-400 hover:text-cyan-300 hover:underline transition-colors"
-                                          >
-                                            {em}
-                                          </a>
-                                        </p>
-                                      ))
-                                    : "N/A"}
-                                </td>
-                                <td className="px-4 py-3 border border-gray-600">
-                                  {item.phone?.length > 0
-                                    ? item.phone.map((ph, idx) => (
-                                        <p key={idx}>
-                                          <a
-                                            href={`tel:${ph}`}
-                                            className="text-emerald-400 hover:text-emerald-300 hover:underline transition-colors"
-                                          >
-                                            {ph}
-                                          </a>
-                                        </p>
-                                      ))
-                                    : "N/A"}
-                                </td>
-                                <td className="px-4 py-3 border border-gray-600">
-                                  {item.location || "N/A"}
-                                </td>
-                                <td className="px-4 py-3 border border-gray-600">
-                                  {item.image ? (
-                                    <a
-                                      href={item.image}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                    >
-                                      <img
-                                        src={item.image}
-                                        alt={item.name || "profile"}
-                                        className="w-12 h-12 rounded-full object-cover border border-gray-600"
-                                      />
-                                    </a>
-                                  ) : (
-                                    "N/A"
-                                  )}
-                                </td>
-                                <td className="px-4 py-3 border border-gray-600">
-                                  {item.description || "N/A"}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </div>
-                ) : info?.information?.raw ? (
-                  <div>
-                    <div className="flex justify-end mb-2">
-                      <button
-                        onClick={() =>
-                          downloadPDF(info.information.raw, `${info.title}.pdf`)
-                        }
-                        className="px-4 py-1.5 bg-gradient-to-r from-cyan-600 to-emerald-600 text-white text-sm rounded-lg shadow hover:from-cyan-500 hover:to-emerald-500 transition-all duration-300 transform hover:-translate-y-0.5 cursor-pointer"
-                      >
-                        ⬇ Download PDF
-                      </button>
-                    </div>
-                    <pre className="text-xs sm:text-sm text-left p-4 bg-gray-700/50 border border-gray-600 rounded-lg max-h-[400px] overflow-auto whitespace-pre-wrap">
-                      {info.information.raw}
-                    </pre>
-                  </div>
-                ) : (
-                  <p className="text-gray-400 italic">
-                    No structured or raw data available.
-                  </p>
-                )}
+      <div className="space-y-10">
+        {data.map((info, infoIndex) => {
+          const validRows =
+            info?.information?.data?.filter(
+              (item) => item.name && item.name.trim() !== ""
+            ) || [];
+
+          return (
+            <div
+              key={infoIndex}
+              className="bg-gray-800/60 backdrop-blur-md p-6 rounded-2xl shadow-lg border border-gray-700/50 transition-all duration-300 hover:shadow-cyan-500/10"
+            >
+              {/* URL + Title */}
+              <div className="mb-6">
+                <p className="text-sm text-gray-400 break-all">
+                  <strong className="text-gray-300">🔗 URL :</strong>{" "}
+                  <a
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-cyan-400 hover:text-cyan-300 hover:underline transition-colors"
+                    href={info.url}
+                  >
+                    {info.url}
+                  </a>
+                </p>
+                <p className="text-sm text-gray-400 mt-1">
+                  <strong className="text-gray-300">Title :</strong>{" "}
+                  {info.title || "Title not found!"}
+                </p>
               </div>
-            );
-          })}
-        </div>
-      )}
+
+              {/* Table or PDF */}
+              {validRows.length > 0 ? (
+                <div>
+                  <div className="flex justify-end mb-2">
+                    <button
+                      onClick={() =>
+                        downloadCSV(validRows, `${info.title.trim().replace(/\s{2,}/g, " ") || 'data'}.csv`)
+                      }
+                      disabled={downloading}
+                      className="px-4 py-1.5 bg-gradient-to-r from-cyan-600 to-emerald-600 text-white text-sm rounded-lg shadow hover:from-cyan-500 hover:to-emerald-500 transition-all duration-300 transform hover:-translate-y-0.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {downloading ? '⏳ Downloading...' : '⬇ Download CSV'}
+                    </button>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <div className="max-h-[500px] overflow-y-auto w-full border border-gray-700 rounded-lg">
+                      <table className="min-w-[1000px] text-xs sm:text-sm border-collapse">
+                        <thead className="bg-gray-700 text-gray-200 sticky top-0 z-10">
+                          <tr>
+                            <th className="px-4 py-3 border border-gray-600">Name</th>
+                            <th className="px-4 py-3 border border-gray-600">Email</th>
+                            <th className="px-4 py-3 border border-gray-600">Phone</th>
+                            <th className="px-4 py-3 border border-gray-600">Location</th>
+                            <th className="px-4 py-3 border border-gray-600">Image</th>
+                            <th className="px-4 py-3 border border-gray-600">Description</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {validRows.map((item, i) => (
+                            <tr
+                              key={i}
+                              className="odd:bg-gray-800 even:bg-gray-700/50"
+                            >
+                              <td className="px-4 py-3 border border-gray-600">
+                                {item.name}
+                              </td>
+                              <td className="px-4 py-3 border border-gray-600">
+                                {item.email?.length > 0
+                                  ? item.email.map((em, idx) => (
+                                      <p key={idx}>
+                                        <a
+                                          href={`mailto:${em}`}
+                                          className="text-cyan-400 hover:text-cyan-300 hover:underline transition-colors"
+                                        >
+                                          {em}
+                                        </a>
+                                      </p>
+                                    ))
+                                  : "N/A"}
+                              </td>
+                              <td className="px-4 py-3 border border-gray-600">
+                                {item.phone?.length > 0
+                                  ? item.phone.map((ph, idx) => (
+                                      <p key={idx}>
+                                        <a
+                                          href={`tel:${ph}`}
+                                          className="text-emerald-400 hover:text-emerald-300 hover:underline transition-colors"
+                                        >
+                                          {ph}
+                                        </a>
+                                      </p>
+                                    ))
+                                  : "N/A"}
+                              </td>
+                              <td className="px-4 py-3 border border-gray-600">
+                                {item.location || "N/A"}
+                              </td>
+                              <td className="px-4 py-3 border border-gray-600">
+                                {item.image ? (
+                                  <a
+                                    href={item.image}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                  >
+                                    <img
+                                      src={item.image}
+                                      alt={item.name || "profile"}
+                                      className="w-12 h-12 rounded-full object-cover border border-gray-600"
+                                    />
+                                  </a>
+                                ) : (
+                                  "N/A"
+                                )}
+                              </td>
+                              <td className="px-4 py-3 border border-gray-600">
+                                {item.description || "N/A"}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              ) : info?.information?.raw ? (
+                <div>
+                  <div className="flex justify-end mb-2">
+                    <button
+                      onClick={() =>
+                        downloadPDF(info.information.raw, `${info.title.trim().replace(/\s{2,}/g, " ") || 'data'}.pdf`)
+                      }
+                      disabled={downloading}
+                      className="px-4 py-1.5 bg-gradient-to-r from-cyan-600 to-emerald-600 text-white text-sm rounded-lg shadow hover:from-cyan-500 hover:to-emerald-500 transition-all duration-300 transform hover:-translate-y-0.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {downloading ? '⏳ Downloading...' : '⬇ Download PDF'}
+                    </button>
+                  </div>
+                  <pre className="text-xs sm:text-sm text-left p-4 bg-gray-700/50 border border-gray-600 rounded-lg max-h-[400px] overflow-auto whitespace-pre-wrap">
+                    {info.information.raw}
+                  </pre>
+                </div>
+              ) : (
+                <p className="text-gray-400 italic">
+                  No structured or raw data available.
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </section>
   );
 };

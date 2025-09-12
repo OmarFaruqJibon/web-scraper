@@ -11,31 +11,14 @@ import { useState, useEffect } from 'react';
 import api from "../callApi";
 
 const Homepage = () => {
-  const [data, setData] = useState([]);
-    const [isLoaded, setIsLoaded] = useState(false);
-  
-    useEffect(() => {
-      setIsLoaded(true);
-      fetchData();
-    }, []);
-  
-    const fetchData = async () => {
-      try {
-        const response = await api.get("/data");
-        setData(response?.data?.dataCollections);
-      } catch (error) {
-        console.error("Error fetching data", error);
-      }
-    };
+
   return (
     <div className="min-h-screen bg-black text-slate-100">
       <Navbar />
-      <HeroSection  isLoaded={isLoaded} fetchData={fetchData} />
+      <HeroSection />
       <Commitment />
-      {/* <Testimonial /> */}
       <Pricing />
       <FAQ />
-      <DemoSection data={data} fetchData={fetchData} />
       <Footer />
     </div>
   );

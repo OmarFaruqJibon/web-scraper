@@ -1,6 +1,7 @@
 // src/components/Navbar.jsx
 import { useState } from 'react';
 import { Menu, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -10,7 +11,7 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <span className="text-2xl font-bold">🕷️ WebCrawler AI</span>
+            <Link to={"/"}><span className="text-2xl font-bold">🕷️ WebCrawler AI</span></Link>
           </div>
           
           <div className="hidden md:flex items-center space-x-8">
@@ -19,6 +20,14 @@ const Navbar = () => {
             <a href="#testimonials" className="text-slate-300 hover:text-blue-400 transition-colors">Testimonials</a>
             <a href="#pricing" className="text-slate-300 hover:text-blue-400 transition-colors">Pricing</a>
             <a href="#faq" className="text-slate-300 hover:text-blue-400 transition-colors">FAQ</a> */}
+
+            <a 
+              href="/results" 
+              className="text-slate-300 hover:text-white transition-colors"
+            >
+              Scraped Data
+            </a>
+
             <button className="px-4 py-1.5 rounded font-semibold shadow-lg transition-all duration-300 relative overflow-hidden bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600">
               Sign In
             </button>
