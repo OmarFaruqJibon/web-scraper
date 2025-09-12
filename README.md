@@ -1,49 +1,59 @@
-A recursive web crawler, which will extract useful informations from any website.
+# 🔍 Recursive Web Crawler
 
-Step 1: Input URL
+A **recursive web crawler** that extracts useful information from any website.  
+It combines a **React frontend**, **FastAPI backend**, and **MongoDB database**, powered by **Ollama LLaMA 3 (LLM)** and **regex rules** for intelligent data extraction.
 
-- The system starts when the user enters a target website URL through the React frontend.
+---
 
-- This URL is sent to the FastAPI backend, which initiates the crawling process.
+## 🚀 Features
 
-Step 2: Crawler Sends URL to Scraper
+- 🌐 Crawl any target website starting from a user-provided URL  
+- 🧠 Extract structured data (names, emails, phone numbers, locations, etc.)  
+- 🔗 Automatically discover and follow internal links recursively  
+- 💾 Store extracted data in **MongoDB**  
+- ⚡ Expose crawling functionality via a **FastAPI backend**  
+- 🖥️ View results in a **React frontend** with structured visualization  
 
-- The Crawler module receives the URL.
+---
 
-- It forwards the URL to the Scraper, whose job is to extract useful data and links.
+## 🛠️ Tech Stack
 
-Step 3: Scraper Extracts Data and Links
+- **Frontend:** React  
+- **Backend:** FastAPI  
+- **Database:** MongoDB  
+- **AI/Parsing:** Ollama LLaMA 3 + Regex  
+- **Crawler/Scraper:** Custom Python modules  
 
-The Scraper processes the page content:
+---
 
-- Extracts structured information (names, emails, phone numbers, locations, etc.) using a mix of Ollama LLaMA 3 (LLM) and regex rules.
+## 📌 Workflow
 
-- Finds all internal links (URLs within the same base domain).
+### Step 1: Input URL
+- User enters a target website URL in the **React frontend**.
+- URL is sent to the **FastAPI backend**, which starts the crawling process.
 
-The Scraper then returns:
+### Step 2: Crawler → Scraper
+- **Crawler module** receives the URL.
+- It forwards the URL to the **Scraper**, which extracts data and links.
 
-- Extracted information
+### Step 3: Scraper Extracts Data & Links
+- Extracts structured data using **LLM + regex**.  
+- Finds all **internal links** (same domain).  
+- Returns both extracted information and discovered URLs.
 
-- Discovered internal URLs
+### Step 4: Recursive Crawling
+- Crawler stores extracted data in **MongoDB**.  
+- For each internal link, the **Scraper** is called again.  
+- Process continues until all reachable pages are crawled.
 
-Step 4: Crawler Stores Data & Recurses
+### Step 5: Results Returned
+- Final dataset is aggregated and sent back via **FastAPI**.  
+- **React frontend** displays the structured results to the user.
 
-The Crawler takes the returned data and:
+---
 
-- Stores extracted information in the MongoDB database.
+## 🤝 Contributing
 
-Loops over each discovered internal URL. For every internal URL:
+- Contributions are welcome!
+- Feel free to fork this repo, open issues, or submit pull requests.
 
-- It calls the Scraper again.
-
-- The Scraper extracts information and finds new URLs.
-
-- This process continues recursively until all reachable internal URLs are processed.
-
-Step 5: Return Data to Frontend
-
-- After crawling is complete, the Crawler aggregates the scraped information.
-
-- It sends the final dataset back to the frontend (React) through the FastAPI backend API.
-
-- The user can then view the collected data in a structured format.
