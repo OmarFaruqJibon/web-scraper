@@ -52,10 +52,10 @@ def send_to_ollama(text: str, retries: int = 1):
             {{
                 "name": "Akhash Dev",
                 "email": []
-                "phone": ["+880 182232584", "01487258961"]
-                "location": "New York, USA",
+                "phone": ["+880 182232584"]
+                "location": "",
                 "image": "https://example.com/john.jpg",
-                "description": ""
+                "description": "Akhash Dev is a software engineer."
             }}
             ]       
             

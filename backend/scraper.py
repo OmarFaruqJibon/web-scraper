@@ -3,6 +3,7 @@ from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
 from llm_extructor import send_to_ollama
+from gemini_ai import send_to_gemini
 
 
 # -------- Helper: DOM stabilization --------
@@ -95,6 +96,7 @@ def scrape_website(url: str):
 
     # --- Send to Ollama ---
     information = send_to_ollama(body_text)
+    # information = send_to_gemini(body_text)
     print("\n✅ Information received from Ollama\n")
 
     # --- Links Extraction ---
