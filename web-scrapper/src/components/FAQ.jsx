@@ -8,29 +8,24 @@ const FAQ = () => {
 
   const faqs = [
     {
-      question: "How does the AI technology work?",
+      question: "How does the recursive web crawler work?",
       answer:
-        "Our AI technology uses machine learning algorithms to analyze your business data, identify patterns, and provide actionable insights to optimize your operations and drive growth.",
+        "The crawler starts from a user-provided URL, extracts data and internal links, and then recursively follows those links until all reachable pages within the domain are processed.",
     },
     {
-      question: "How long does it take to implement?",
+      question: "What kind of data can be extracted?",
       answer:
-        "Implementation time varies based on your business size and needs, but most companies can get up and running within 2-4 weeks with our streamlined onboarding process.",
+        "Our system extracts structured information such as names, emails, phone numbers, and locations using a combination of regex rules and LLM model understanding.",
     },
     {
-      question: "Is my data secure with your platform?",
+      question: "Do I need technical knowledge to use this tool?",
       answer:
-        "Absolutely. We employ enterprise-grade security measures including encryption, regular security audits, and compliance with industry standards to ensure your data remains protected.",
+        "No, the React frontend provides a simple interface where you just enter a website URL, and the system handles the crawling, extraction, and visualization automatically.",
     },
     {
-      question: "Can I integrate with my existing tools?",
+      question: "Can the crawler handle large websites?",
       answer:
-        "Yes, our platform offers extensive integration capabilities with popular business tools through our API and pre-built connectors.",
-    },
-    {
-      question: "What kind of support do you offer?",
-      answer:
-        "We provide multiple support channels including email, chat, and phone support based on your plan, along with comprehensive documentation and training resources.",
+        "Yes, the recursive design allows the crawler to process multiple pages efficiently. However, performance depends on site size, server response, and configured crawl depth.",
     },
   ];
 

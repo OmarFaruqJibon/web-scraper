@@ -64,7 +64,7 @@ const ResultsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-slate-100">
+    <div className="min-h-screen bg-black text-slate-100s">
       <Navbar />
       
       {/* AI-Styled Header */}
@@ -86,15 +86,15 @@ const ResultsPage = () => {
             transition={{ duration: 0.6 }}
             className="text-center"
           >
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-white">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-400">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 text-white">
+              <span className="bg-clip-text text-white">
                 {showProgress ? 'AI Processing' : 'Scraping Results'}
               </span>
             </h1>
-            <p className="text-lg text-gray-300 max-w-2xl mx-auto">
+            <p className=" text-gray-300 max-w-2xl mx-auto">
               {showProgress 
-                ? 'Our AI is analyzing and extracting data from the website. This may take a few moments.'
-                : 'View all your previously scraped data results.'
+                ? 'Our AI is analyzing and extracting data from the website. This may take a few moments'
+                : 'View all your previously scraped data results'
               }
             </p>
           </motion.div>
@@ -120,7 +120,7 @@ const ResultsPage = () => {
                     </svg>
                   </div>
                 </div>
-                <h2 className="text-2xl font-bold text-white">AI Processing</h2>
+                <h2 className="text-2xl font-bold text-white">AI Processing...</h2>
                 <p className="text-gray-400 mt-2">Our neural networks are extracting data patterns</p>
               </div>
 
@@ -163,6 +163,7 @@ const ResultsPage = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.3 }}
+          
         >
           <DemoSection data={data} fetchData={fetchData} />
         </motion.div>

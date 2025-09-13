@@ -73,7 +73,7 @@ const DemoSection = ({ data, fetchData }) => {
   // Handle case where there's no data
   if (!data || data.length === 0) {
     return (
-      <section id="demo" className="py-16 px-6 relative">
+      <section id="demo" className="py-16 px-6 relative mb-52">
         <div className="absolute -top-20 left-0 w-full h-20 bg-gradient-to-b from-transparent to-gray-900"></div>
 
         <h2 className="font-bold text-3xl mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-emerald-400">
@@ -119,13 +119,13 @@ const DemoSection = ({ data, fetchData }) => {
   const hasRawData = selectedItem?.information?.raw;
 
   return (
-    <section id="demo" className="py-16 px-6 relative">
+    <section id="demo" className="py-16 px-6 relative mb-52">
       <div className="absolute -top-20 left-0 w-full h-20 bg-gradient-to-b from-transparent to-gray-900"></div>
 
 
       <div className="flex flex-col lg:flex-row gap-6 h-[600px]">
         {/* Left Side - Website List */}
-        <div className="w-full lg:w-1/3 bg-gray-900/60 backdrop-blur-md rounded-2xl shadow-lg border border-gray-700/50 p-4 overflow-hidden flex flex-col">
+        <div className="w-full lg:w-1/3 bg-gray-900/60 backdrop-blur-md rounded-2xl shadow-lg border border-gray-700/50 p-3 overflow-hidden flex flex-col">
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-white mb-2">Scraped Websites</h3>
             
@@ -197,7 +197,7 @@ const DemoSection = ({ data, fetchData }) => {
           </div>
         </div>
         {/* Right Side - Data Table */}
-        <div className="w-full lg:w-2/3 bg-gray-900/60 backdrop-blur-md rounded-2xl shadow-lg border border-gray-700/50 p-6 overflow-hidden flex flex-col">
+        <div className="w-full lg:w-2/3 bg-gray-900/60 backdrop-blur-md rounded-2xl shadow-lg border border-gray-700/50 p-3 overflow-hidden flex flex-col">
           {selectedItem ? (
             <>
               {/* Header with website info and actions */}
@@ -252,28 +252,28 @@ const DemoSection = ({ data, fetchData }) => {
               {/* Data Table or Raw Content */}
               {hasTableData ? (
                 <div className="overflow-auto flex-1">
-                  <div className="max-h-full overflow-auto w-full border border-gray-600 rounded-lg">
+                  <div className="max-h-full overflow-auto w-full border border-gray-700 rounded-lg">
                     <table className="min-w-full text-xs sm:text-sm border-collapse">
-                      <thead className="bg-gray-800 text-gray-200 sticky top-0 z-10">
+                      <thead className="bg-gray-900 text-gray-200 sticky top-0 z-10">
                         <tr>
-                          <th className="px-4 py-3 border border-gray-600">Name</th>
-                          <th className="px-4 py-3 border border-gray-600">Email</th>
-                          <th className="px-4 py-3 border border-gray-600">Phone</th>
-                          <th className="px-4 py-3 border border-gray-600">Location</th>
-                          <th className="px-4 py-3 border border-gray-600">Image</th>
-                          <th className="px-4 py-3 border border-gray-600">Description</th>
+                          <th className="px-4 py-3 border border-gray-700">Name</th>
+                          <th className="px-4 py-3 border border-gray-700">Email</th>
+                          <th className="px-4 py-3 border border-gray-700">Phone</th>
+                          <th className="px-4 py-3 border border-gray-700">Location</th>
+                          <th className="px-4 py-3 border border-gray-700">Image</th>
+                          <th className="px-4 py-3 border border-gray-700">Description</th>
                         </tr>
                       </thead>
                       <tbody>
                         {validRows.map((item, i) => (
                           <tr
                             key={i}
-                            className="odd:bg-gray-800 even:bg-gray-700/50 hover:bg-gray-700/70 transition-colors"
+                            className="odd:bg-gray-900 even:bg-gray-800/50 hover:bg-gray-700/70 transition-colors"
                           >
-                            <td className="px-4 py-3 border border-gray-600">
+                            <td className="px-4 py-3 border border-gray-700">
                               {item.name}
                             </td>
-                            <td className="px-4 py-3 border border-gray-600">
+                            <td className="px-4 py-3 border border-gray-700">
                               {item.email?.length > 0
                                 ? item.email.map((em, idx) => (
                                     <p key={idx}>
@@ -287,7 +287,7 @@ const DemoSection = ({ data, fetchData }) => {
                                   ))
                                 : "N/A"}
                             </td>
-                            <td className="px-4 py-3 border border-gray-600">
+                            <td className="px-4 py-3 border border-gray-700">
                               {item.phone?.length > 0
                                 ? item.phone.map((ph, idx) => (
                                     <p key={idx}>
@@ -301,10 +301,10 @@ const DemoSection = ({ data, fetchData }) => {
                                   ))
                                 : "N/A"}
                             </td>
-                            <td className="px-4 py-3 border border-gray-600">
+                            <td className="px-4 py-3 border border-gray-700">
                               {item.location || "N/A"}
                             </td>
-                            <td className="px-4 py-3 border border-gray-600">
+                            <td className="px-4 py-3 border border-gray-700">
                               {item.image ? (
                                 <a
                                   href={item.image}
@@ -314,14 +314,14 @@ const DemoSection = ({ data, fetchData }) => {
                                   <img
                                     src={item.image}
                                     alt={item.name || "profile"}
-                                    className="w-12 h-12 rounded-full object-cover border border-gray-600"
+                                    className="w-12 h-12 rounded-full object-cover border border-gray-700"
                                   />
                                 </a>
                               ) : (
                                 "N/A"
                               )}
                             </td>
-                            <td className="px-4 py-3 border border-gray-600 max-w-xs truncate">
+                            <td className="px-4 py-3 border border-gray-700 max-w-xs truncate">
                               {item.description || "N/A"}
                             </td>
                           </tr>
@@ -332,7 +332,7 @@ const DemoSection = ({ data, fetchData }) => {
                 </div>
               ) : hasRawData ? (
                 <div className="overflow-auto flex-1">
-                  <pre className="text-xs sm:text-sm text-left p-4 bg-gray-700/50 border border-gray-600 rounded-lg h-full overflow-auto whitespace-pre-wrap">
+                  <pre className="text-xs sm:text-sm text-left p-4 bg-gray-800/50 border border-gray-700 rounded-lg h-full overflow-auto whitespace-pre-wrap">
                     {selectedItem.information.raw}
                   </pre>
                 </div>
@@ -353,6 +353,8 @@ const DemoSection = ({ data, fetchData }) => {
           )}
         </div>
       </div>
+
+
     </section>
   );
 };
