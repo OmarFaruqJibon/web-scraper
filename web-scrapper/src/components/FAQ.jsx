@@ -63,8 +63,7 @@ const FAQ = () => {
             Frequently Asked Questions
           </h2>
           <p className="text-gray-400">
-            Find answers to common questions about our AI-powered business
-            solutions.
+            Find answers to common questions about our AI-powered Web Crawler
           </p>
         </motion.div>
 

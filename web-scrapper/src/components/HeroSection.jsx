@@ -44,7 +44,7 @@ const HeroSection = ({ isLoaded, fetchData }) => {
 
           <p className="text-lg md:text-xl text-gray-300 mb-10 max-w-2xl mx-auto leading-relaxed">
             Harness the power of <span className="text-purple-400 font-semibold">AI</span> to fetch structured data from any website —{" "}
-            <span className="text-blue-400 font-semibold">no coding required</span>.
+            <span className="text-blue-400 font-semibold">no coding required</span>
           </p>
 
           <motion.div

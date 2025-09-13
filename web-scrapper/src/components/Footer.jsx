@@ -10,7 +10,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
           {/* Brand */}
           <div>
-            <h3 className="text-2xl font-bold mb-4 text-blue-400">EclipseAI</h3>
+            <h3 className="text-2xl font-bold mb-4 text-blue-400">WebCrawler AI</h3>
             <p className="text-gray-400 mb-6">
               AI-powered solutions for accelerated business growth.
             </p>
@@ -87,7 +87,7 @@ const Footer = () => {
 
         {/* Divider + Bottom */}
         <div className="pt-8 border-t border-slate-800 text-center text-gray-500 text-sm">
-          <p>© {new Date().getFullYear()} EclipseAI. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} WebCrawler AI. All rights reserved.</p>
         </div>
       </div>
     </footer>
