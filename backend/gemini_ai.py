@@ -1,4 +1,4 @@
-# llm_extructor.py
+# gemini_ai.py
 import requests
 import re
 import json

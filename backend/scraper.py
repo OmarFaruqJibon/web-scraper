@@ -1,8 +1,9 @@
+# scraper.py
 import time
 from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
-from llm_extructor import send_to_ollama
+from llm_extractor import process_with_ollama
 from gemini_ai import send_to_gemini
 
 
@@ -27,6 +28,54 @@ def wait_for_stable_dom(page, timeout=30, stable_time=2):
     return False
 
 
+# -------- Helper: Auto-scroll for lazy-loading --------
+def auto_scroll(page, pause=1.0, max_attempts=20):
+    """
+    Scrolls to the bottom of the page to trigger lazy loading/infinite scroll.
+    Stops when no new content is loaded or after max_attempts.
+    """
+    last_height = page.evaluate("() => document.body.scrollHeight")
+
+    for _ in range(max_attempts):
+        page.evaluate("() => window.scrollTo(0, document.body.scrollHeight)")
+        time.sleep(pause)
+        new_height = page.evaluate("() => document.body.scrollHeight")
+        if new_height == last_height:
+            break
+        last_height = new_height
+
+    print("✅ Finished auto-scrolling\n")
+
+
+# --- Extract body text and keep <img> inline ---
+def extract_text_with_images(soup):
+    parts = []
+    if not soup.body:
+        return str(soup)  # fallback
+
+    for elem in soup.body.descendants:
+        if elem.name == "img":
+            # Insert image placeholder inline
+            parts.append(
+                f"<img src='{elem.get('src', '')}' alt='{elem.get('alt', '')}'>"
+            )
+        elif elem.string and elem.string.strip():
+            # Add text content
+            parts.append(elem.string.strip())
+
+    return " ".join(parts)
+
+# -------- Helper: Chunking --------
+def chunk_text(text: str, chunk_size=3000, overlap=200):
+    """Split text into overlapping chunks with <block> wrappers"""
+    chunks, start = [], 0
+    while start < len(text):
+        end = start + chunk_size
+        chunk = text[start:end]
+        chunks.append(f"<block>\n{chunk}\n</block>")
+        start += chunk_size - overlap
+    return chunks
+
 # -------- Scraper Function --------
 def scrape_website(url: str):
     """Scrape website, extract information, links, and images using Playwright."""
@@ -35,7 +84,7 @@ def scrape_website(url: str):
 
     with sync_playwright() as p:
         browser = p.chromium.launch(
-            headless=True,  # Run headless browser
+            headless=True,
             args=[
                 "--no-sandbox",
                 "--disable-dev-shm-usage",
@@ -50,15 +99,14 @@ def scrape_website(url: str):
         ))
 
         try:
-            # Load page
-            page.goto(url, timeout=120000)  # 120 sec timeout
+            page.goto(url, timeout=120000)
             print("✅ Browser launched\n")
 
-            # Wait for network to be idle
             page.wait_for_load_state("networkidle", timeout=30000)
             print("✅ Document ready\n")
 
-            # Wait until DOM stabilizes
+            auto_scroll(page, pause=1.0, max_attempts=30)
+
             if wait_for_stable_dom(page, timeout=30, stable_time=2):
                 print("✅ DOM stabilized (data loaded)\n")
             else:
@@ -80,24 +128,35 @@ def scrape_website(url: str):
     # Remove noise
     for tag in soup(["script", "style", "header", "footer", "nav"]):
         tag.decompose()
+    
+    body_text = extract_text_with_images(soup)
+    
+    print(f"Body text: {body_text}\n")
+    
+    blocks = chunk_text(body_text, chunk_size=3000, overlap=200)
 
-    # Extract body text + keep <img> tags inline
-    if soup.body:
-        body_text = soup.body.get_text(" ", strip=True)
-        for img in soup.find_all("img"):
-            body_text += f" <img src='{img.get('src', '')}' alt='{img.get('alt', '')}'> "
-    else:
-        body_text = str(soup)
+    print(f"\n✅ Body split into {len(blocks)} blocks\n")
 
-    print("\n✅ Body extracted\n")
+    # --- Send to Ollama in batches ---
+    all_results = []
+    for i, block in enumerate(blocks, 1):
+        print(f"🔹 Processing block {i}/{len(blocks)}")
+        res = process_with_ollama(block)
+        if res and res.get("data"):
+            all_results.extend(res["data"])
 
-    print(body_text)
-    print("\n\n--------------------------\n\n")
+    # Deduplicate results
+    unique = []
+    seen = set()
+    for item in all_results:
+        key = (item.get("name"), tuple(item.get("email", [])), tuple(item.get("phone", [])))
+        if key not in seen:
+            seen.add(key)
+            unique.append(item)
 
-    # --- Send to Ollama ---
-    information = send_to_ollama(body_text)
-    # information = send_to_gemini(body_text)
-    print("\n✅ Information received from Ollama\n")
+    information = {"data": unique, "raw": all_results}
+
+    print(f"\n✅ Information received from LLM: {len(unique)} unique people\n")
 
     # --- Links Extraction ---
     base_domain = urlparse(url).netloc
@@ -123,3 +182,4 @@ def scrape_website(url: str):
         "base_links": list(set(base_links)),
         "external_links": list(set(external_links)),
     }
+

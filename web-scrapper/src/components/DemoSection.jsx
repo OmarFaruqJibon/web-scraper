@@ -4,6 +4,7 @@ const DemoSection = ({ data, fetchData }) => {
   const [downloading, setDownloading] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  console.log(data)
 
   // Download CSV function
   const downloadCSV = (rows, filename) => {
