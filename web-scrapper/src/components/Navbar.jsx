@@ -13,7 +13,7 @@ const Navbar = () => {
           <div className="flex items-center">
             <Link to={"/"}><span className="text-2xl font-bold">🕷️ WebCrawler AI</span></Link>
           </div>
-          
+           
           <div className="hidden md:flex items-center space-x-8">
             {/* <a href="#solutions" className="text-slate-300 hover:text-blue-400 transition-colors">Solutions</a>
             <a href="#commitment" className="text-slate-300 hover:text-blue-400 transition-colors">Commitment</a>
@@ -21,16 +21,12 @@ const Navbar = () => {
             <a href="#pricing" className="text-slate-300 hover:text-blue-400 transition-colors">Pricing</a>
             <a href="#faq" className="text-slate-300 hover:text-blue-400 transition-colors">FAQ</a> */}
 
-            <a 
-              href="/results" 
-              className="text-slate-300 hover:text-white transition-colors"
+            <Link
+              to={"/results"}
+              className="px-4 py-1.5 rounded font-semibold shadow-lg transition-all duration-300 relative overflow-hidden bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
             >
               Scraped Data
-            </a>
-
-            <button className="px-4 py-1.5 rounded font-semibold shadow-lg transition-all duration-300 relative overflow-hidden bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600">
-              Sign In
-            </button>
+            </Link>
           </div>
           
           <div className="md:hidden flex items-center">
@@ -43,16 +39,14 @@ const Navbar = () => {
       
       {/* Mobile menu */}
       {isOpen && (
-        <div className="md:hidden bg-slate-800 border-b border-slate-700">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <a href="#solutions" className="block px-3 py-2 text-slate-300 rounded-md hover:text-blue-400">Solutions</a>
-            <a href="#commitment" className="block px-3 py-2 text-slate-300 rounded-md hover:text-blue-400">Commitment</a>
-            <a href="#testimonials" className="block px-3 py-2 text-slate-300 rounded-md hover:text-blue-400">Testimonials</a>
-            <a href="#pricing" className="block px-3 py-2 text-slate-300 rounded-md hover:text-blue-400">Pricing</a>
-            <a href="#faq" className="block px-3 py-2 text-slate-300 rounded-md hover:text-blue-400">FAQ</a>
-            <button className="w-full mt-4 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
-              Get Started
-            </button>
+        <div className="md:hidden bg-slate-800 border-b border-slate-700 min-h-20">
+          <div className="px-2 pt-6 pb-3 space-y-1 sm:px-3">
+            <Link
+              to={"/results"}
+              className="sm:mt-7 px-4 py-1.5 rounded font-semibold shadow-lg transition-all duration-300 relative overflow-hidden bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
+            >
+              Scraped Data
+            </Link>
           </div>
         </div>
       )}

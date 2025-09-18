@@ -81,7 +81,7 @@ const Commitment = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="flex items-center gap-8 mt-20 relative bg-slate-900/60 backdrop-blur-xl rounded-2xl p-6 text-center border border-slate-700/50"
+          className="flex flex-col sm:flex-row items-center gap-8 mt-20 relative bg-slate-900/60 backdrop-blur-xl rounded-2xl p-6 text-center border border-slate-700/50"
         >
           <div>
             <h3 className="text-2xl text-left font-bold mb-4 text-white">

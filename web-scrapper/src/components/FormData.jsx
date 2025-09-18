@@ -26,7 +26,7 @@ const navigate = useNavigate();
         } catch (err) {
           console.error("Error fetching progress", err);
         }
-      }, 2000);
+      }, 60000);
     }
     return () => clearInterval(interval);
   }, [isLoading]);
@@ -52,7 +52,7 @@ const navigate = useNavigate();
       {/* Form */}
       <motion.form 
         onSubmit={handleSubmit} 
-        className="flex flex-col sm:flex-row gap-4 items-start"
+        className="flex flex-col sm:flex-row gap-4 items-center"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.4 }}
