@@ -72,7 +72,6 @@ def crawl_website(start_url: str, max_pages: int = 1, max_depth: int = 10):
             except Exception as e:
                 print(f"❌ MongoDB Insert failed: {e}")
 
-            # scraperdb_collection.insert_one(scraped)
             count += 1
             crawl_progress["done"] = count
             print(f"[{count}] Scraped: {normalized_url} (depth={depth})")

@@ -15,44 +15,53 @@ const ResultsPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Check if we came from a scraping action
-  useEffect(() => {
-    const fromScrape = location.state?.fromScrape;
-    if (fromScrape) {
-      setShowProgress(true);
-      setIsLoading(true);
-      startProgressMonitoring();
-    } else {
-      // Direct access to results page - just load existing data
-      fetchData();
-    }
-  }, [location]);
+// Check if we came from a scraping action
+useEffect(() => {
+  const fromScrape = location.state?.fromScrape;
+  if (fromScrape) {
+    setShowProgress(true);
+    setIsLoading(true);
+    startProgressMonitoring();
+  } else {
+    // Direct access to results page - just load existing data
+    fetchData();
+  }
+}, [location]);
 
-  const startProgressMonitoring = () => {
-    const interval = setInterval(async () => {
-      try {
-        const res = await api.get("/progress");
-        setProgress(res.data);
-        
-        if (res.data.status === "finished" || res.data.status === "error") {
-          clearInterval(interval);
-          setIsLoading(false);
-          setShowProgress(false);
-          fetchData(); // Refresh data when finished
-          
-          // Remove the fromScrape state to prevent showing progress on refresh
-          navigate('/results', { replace: true, state: {} });
-        }
-      } catch (err) {
-        console.error("Error fetching progress", err);
+const startProgressMonitoring = () => {
+  let interval;
+
+  const fetchProgress = async () => {
+    try {
+      const res = await api.get("/progress");
+      setProgress(res.data);
+
+      if (res.data.status === "finished" || res.data.status === "error") {
         clearInterval(interval);
         setIsLoading(false);
         setShowProgress(false);
+        fetchData(); // Refresh data when finished
+
+        // Remove the fromScrape state to prevent showing progress on refresh
+        navigate("/results", { replace: true, state: {} });
       }
-    }, 2000);
-    
-    return () => clearInterval(interval);
+    } catch (err) {
+      console.error("Error fetching progress", err);
+      clearInterval(interval);
+      setIsLoading(false);
+      setShowProgress(false);
+    }
   };
+
+  // 🔥 Fire immediately once
+  fetchProgress();
+
+  // ⏱️ Then repeat every 1 min
+  interval = setInterval(fetchProgress, 60000);
+
+  return () => clearInterval(interval);
+};
+
 
   const fetchData = async () => {
     try {

@@ -4,7 +4,6 @@ from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
 from llm_extractor import process_with_ollama, merge_results
-from gemini_ai import send_to_gemini
 
 
 # -------- Helper: DOM stabilization --------
@@ -44,6 +43,7 @@ def auto_scroll(page, pause=1.0, max_attempts=20):
 
 # --- Extract body text and keep <img> inline ---
 def extract_text_with_images(soup):
+    """Convert <body> into text, keeping <img src alt> inline."""
     parts = []
     if not soup.body:
         return str(soup)  # fallback
@@ -56,7 +56,6 @@ def extract_text_with_images(soup):
 
     return " ".join(parts)
 
-
 # -------- Helper: Chunking --------
 def chunk_text(text: str, chunk_size=3000, overlap=200):
     """Split text into overlapping chunks with <block> wrappers"""
@@ -67,7 +66,6 @@ def chunk_text(text: str, chunk_size=3000, overlap=200):
         chunks.append(f"<block>\n{chunk}\n</block>")
         start += chunk_size - overlap
     return chunks
-
 
 # -------- Scraper Function --------
 def scrape_website(url: str):
@@ -111,16 +109,18 @@ def scrape_website(url: str):
 
     # --- Parse with BeautifulSoup ---
     soup = BeautifulSoup(page_source, "html.parser")
-    soup_for_base_url = BeautifulSoup(page_source, "html.parser")
+    soup_for_links = BeautifulSoup(page_source, "html.parser")
     print("\n✅ Page parsed\n")
 
     # Remove noise
     for tag in soup(["script", "style", "header", "footer", "nav"]):
         tag.decompose()
 
+    # Inline text + images
     body_text = extract_text_with_images(soup)
-    print(f"Body text: {body_text}\n")
+    print(f"Body length: {len(body_text)} chars\n")
 
+    # DOM-based chunking
     blocks = chunk_text(body_text, chunk_size=3000, overlap=200)
     print(f"\n✅ Body split into {len(blocks)} blocks\n")
 
@@ -128,19 +128,25 @@ def scrape_website(url: str):
     all_results = []
     for i, block in enumerate(blocks, 1):
         print(f"🔹 Processing block {i}/{len(blocks)}")
+        print(f"\n\nBlock : {block}\n\n")
+        
         res = process_with_ollama(block)
+        
         if res and res.get("data"):
-            all_results.append(res["data"])
+            all_results.append(res)
+    
+    
+    print(f"\n\n-------- 🧧 All Result : \n\n {all_results}")
 
-    # Merge results from all blocks using new LLM schema
-    information = merge_results([{"data": r} for r in all_results])
-    print(f"\n✅ Information received from LLM: {len(information['people'])} unique people\n")
+    # Merge results from all blocks
+    information = merge_results(all_results)
+    print(f"\n✅ Information received from LLM\n")
 
     # --- Links Extraction ---
     base_domain = urlparse(url).netloc
     base_links, external_links = [], []
 
-    for a in soup_for_base_url.find_all("a", href=True):
+    for a in soup_for_links.find_all("a", href=True):
         abs_link = urljoin(url, a["href"])
         link_domain = urlparse(abs_link).netloc
 
@@ -156,10 +162,11 @@ def scrape_website(url: str):
     return {
         "url": url,
         "title": soup.title.string.strip() if soup.title else None,
-        "information": information,  # new LLM schema
+        "information": information,
         "base_links": list(set(base_links)),
         "external_links": list(set(external_links)),
     }
+
 
 
 
@@ -171,136 +178,119 @@ import time
 
 
 def send_to_ollama_chunk(text: str, retries: int = 1):
+    """
+    Send a chunk of HTML/text to Ollama LLM for structured information extraction.
+    Returns parsed JSON data and raw text.
+    """
     ollama_url = "http://localhost:11434/api/generate"
 
     prompt = f"""
-        You are an information extraction system.
+        You are a highly accurate web information extraction AI.
 
-        Input: Cleaned HTML grouped into <block>...</block>.
-        Each <block> may describe people, organizations, products, events, or general information.
+        Input:
+        - HTML content grouped into <block>...</block>.
+        - Each block may describe people, organizations, products, events, services, courses, or general information.
+        - Images may appear as <img src='...' alt='...'> → map these to "image" field.
 
-        Your task:
-        - Extract information into this schema:
+        Task:
+        - Extract all factual data into the schema below.
+        - Output must be valid JSON **only**. No explanations, no markdown fences.
+        - Preserve numbers, currencies, emails, phones, and proper names exactly.
+        - If a field is missing, use empty string, empty list, or empty object.
+
+        Schema:
         {{
             "people": [
-                {{
-                    "name": "",
-                    "email": [],
-                    "phone": [],
-                    "location": "",
-                    "image": "",
-                    "description": ""
-                }}
+                {{"name":"","role":"","title":"","email":[],"phone":[],"location":"","image":"","description":""}}
             ],
             "organization": [
-                {{
-                "name": "",
-                "description": "",
-                "address": "",
-                "contact": {{
-                    "email": [],
-                    "phone": [],
-                    "social": []
-                }},
-                "hours": ""
-            }}
+                {{"name":"","description":"","type":"","address":"","contact":{{"email":[],"phone":[],"social":[]}},"hours":""}}
             ],
             "products": [
-                {{
-                    "name": "",
-                    "price": "",
-                    "description": "",
-                    "image": "",
-                    "reviews": []
-                }}
-            ]
-            "events": [
-                {{
-                    "name": "",
-                    "date": "",
-                    "location": "",
-                    "description": "",
-                    "speakers": []
-                }}
+                {{"name":"","category":"","price":"","currency":"","description":"","image":"","reviews":[]}}
             ],
-            "content": [
-                {{
-                "articles": [],
-                "faqs": [],
-                "policies": []
-            }}
-            ]
-            "other_info": [{{}}]
+            "events": [
+                {{"name":"","date":"","time":"","location":"","description":"","organizer":"","speakers":[]}}
+            ],
+            "services": [
+                {{"name":"","description":"","department":"","contact":{{"email":[],"phone":[]}}}}
+            ],
+            "courses": [
+                {{"name":"","code":"","department":"","duration":"","description":""}}
+            ],
+            "content": {{"articles":[],"news":[],"blogs":[],"faqs":[],"policies":[],"announcements":[]}},
+            "other_info":[]
         }}
-
-        Rules:
-        - Always return JSON with all keys present.
-        - If no data for a section, return empty list, empty string, or empty object.
-        - No explanations, no text outside JSON.
-
-        HTML:
-        {text}
-    """
+        """
 
     payload = {
         "model": "llama3:8b",
-        "prompt": prompt,
+        "prompt": prompt + "\nHTML Block:\n" + text,
         "stream": False
     }
 
     required_keys = [
         "people", "organization", "products", "events",
-        "content", "other_info"
+        "services", "courses", "content", "other_info"
     ]
 
     for attempt in range(retries):
         try:
             print("\n🔃 Sending chunk to Ollama\n")
             start_time = time.time()
-
+            
             response = requests.post(ollama_url, json=payload, timeout=1800)
             response.raise_for_status()
-
             elapsed = time.time() - start_time
             print(f"⚡ Extraction took {elapsed:.2f} sec\n")
 
             data = response.json()
             raw_text = data.get("response", "").strip()
 
-            # Try parsing full JSON
+            # Try parsing JSON
             try:
                 parsed = json.loads(raw_text)
                 for k in required_keys:
                     if k not in parsed:
-                        parsed[k] = [] if k in ["people", "products", "events"] else {}
+                        parsed[k] = [] if k != "content" else {}
                 return {"data": parsed, "raw": raw_text}
             except json.JSONDecodeError:
-                pass
+                # Fallback regex
+                matches = re.findall(r"\{.*\}", raw_text, re.DOTALL)
+                if matches:
+                    try:
+                        parsed = json.loads(matches[0])
+                        for k in required_keys:
+                            if k not in parsed:
+                                parsed[k] = [] if k != "content" else {}
+                        return {"data": parsed, "raw": raw_text}
+                    except json.JSONDecodeError:
+                        return {"data": {k: [] if k != "content" else {} for k in required_keys}, "raw": raw_text}
 
-            # Try regex fallback
-            matches = re.findall(r"\{.*\}", raw_text, re.DOTALL)
-            if matches:
-                try:
-                    parsed = json.loads(matches[0])
-                    for k in required_keys:
-                        if k not in parsed:
-                            parsed[k] = [] if k in ["people", "products", "events"] else {}
-                    return {"data": parsed, "raw": raw_text}
-                except json.JSONDecodeError:
-                    return {"data": {k: [] if k in ["people", "products", "events"] else {} for k in required_keys}, "raw": raw_text}
-
-            return {"data": {k: [] if k in ["people", "products", "events"] else {} for k in required_keys}, "raw": raw_text}
+            return {"data": {k: [] if k != "content" else {} for k in required_keys}, "raw": raw_text}
 
         except (requests.exceptions.RequestException, json.JSONDecodeError) as e:
             print(f"Ollama error (attempt {attempt+1}): {e}")
             if attempt < retries - 1:
                 time.sleep(1)
                 continue
-            return {"data": {k: [] if k in ["people", "products", "events"] else {} for k in required_keys}, "raw": ""}
+            return {"data": {k: [] if k != "content" else {} for k in required_keys}, "raw": ""}
+
+
+# -------- Deduplication Helpers --------
+def deduplicate_items(items, keys=("name", "title", "category", "price")):
+    """Generic deduplication based on a set of keys."""
+    seen, unique = set(), []
+    for item in items:
+        key = tuple((item.get(k) or "").strip().lower() for k in keys)
+        if key not in seen:
+            seen.add(key)
+            unique.append(item)
+    return unique
 
 
 def deduplicate_people(people):
-    """Remove duplicates based on (name + email + phone)."""
+    """Deduplicate people based on name + email + phone."""
     seen, unique = set(), []
     for person in people:
         key = (
@@ -314,39 +304,57 @@ def deduplicate_people(people):
     return unique
 
 
+# -------- Merge Results from Multiple Blocks --------
 def merge_results(results):
     """Merge multiple chunk results into one consistent structure."""
     merged = {
         "people": [],
-        "organization": {},
+        "organization": [],
         "products": [],
         "events": [],
-        "content": {"articles": [], "faqs": [], "policies": []},
-        "other_info": {}
+        "services": [],
+        "courses": [],
+        "content": {
+            "articles": [],
+            "news": [],
+            "blogs": [],
+            "faqs": [],
+            "policies": [],
+            "announcements": []
+        },
+        "other_info": []
     }
 
     for r in results:
         data = r.get("data", {})
+
         merged["people"].extend(data.get("people", []))
+        merged["organization"].extend(data.get("organization", []))
         merged["products"].extend(data.get("products", []))
         merged["events"].extend(data.get("events", []))
-
-        # Merge organization (prefer non-empty fields)
-        for k, v in data.get("organization", {}).items():
-            if v and not merged["organization"].get(k):
-                merged["organization"][k] = v
+        merged["services"].extend(data.get("services", []))
+        merged["courses"].extend(data.get("courses", []))
 
         # Merge content
-        for section in ["articles", "faqs", "policies"]:
+        for section in ["articles", "news", "blogs", "faqs", "policies", "announcements"]:
             merged["content"][section].extend(data.get("content", {}).get(section, []))
 
-        # Merge other_info (last one wins)
-        merged["other_info"].update(data.get("other_info", {}))
+        # Merge other_info
+        if isinstance(data.get("other_info"), list):
+            merged["other_info"].extend(data.get("other_info"))
+        elif isinstance(data.get("other_info"), dict):
+            merged["other_info"].append(data.get("other_info"))
 
+    # Deduplicate categories
     merged["people"] = deduplicate_people(merged["people"])
+    merged["products"] = deduplicate_items(merged["products"], keys=("name", "category", "price"))
+    merged["organization"] = deduplicate_items(merged["organization"], keys=("name",))
+    merged["events"] = deduplicate_items(merged["events"], keys=("name", "date"))
+
     return merged
 
 
+# -------- Process a Single Block --------
 def process_with_ollama(block: str):
     res = send_to_ollama_chunk(block)
     all_data, all_raw = None, []
@@ -358,4 +366,3 @@ def process_with_ollama(block: str):
             all_raw.append(res["raw"])
 
     return {"data": all_data, "raw": all_raw}
-

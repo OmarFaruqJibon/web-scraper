@@ -3,7 +3,7 @@ import time
 from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
-from llm_extractor import process_with_ollama
+from llm_extractor import process_with_ollama, merge_results
 from gemini_ai import send_to_gemini
 
 
@@ -30,12 +30,8 @@ def wait_for_stable_dom(page, timeout=30, stable_time=2):
 
 # -------- Helper: Auto-scroll for lazy-loading --------
 def auto_scroll(page, pause=1.0, max_attempts=20):
-    """
-    Scrolls to the bottom of the page to trigger lazy loading/infinite scroll.
-    Stops when no new content is loaded or after max_attempts.
-    """
+    """Scroll to bottom to trigger lazy loading/infinite scroll."""
     last_height = page.evaluate("() => document.body.scrollHeight")
-
     for _ in range(max_attempts):
         page.evaluate("() => window.scrollTo(0, document.body.scrollHeight)")
         time.sleep(pause)
@@ -43,7 +39,6 @@ def auto_scroll(page, pause=1.0, max_attempts=20):
         if new_height == last_height:
             break
         last_height = new_height
-
     print("✅ Finished auto-scrolling\n")
 
 
@@ -55,15 +50,12 @@ def extract_text_with_images(soup):
 
     for elem in soup.body.descendants:
         if elem.name == "img":
-            # Insert image placeholder inline
-            parts.append(
-                f"<img src='{elem.get('src', '')}' alt='{elem.get('alt', '')}'>"
-            )
+            parts.append(f"<img src='{elem.get('src', '')}' alt='{elem.get('alt', '')}'>")
         elif elem.string and elem.string.strip():
-            # Add text content
             parts.append(elem.string.strip())
 
     return " ".join(parts)
+
 
 # -------- Helper: Chunking --------
 def chunk_text(text: str, chunk_size=3000, overlap=200):
@@ -76,9 +68,10 @@ def chunk_text(text: str, chunk_size=3000, overlap=200):
         start += chunk_size - overlap
     return chunks
 
+
 # -------- Scraper Function --------
 def scrape_website(url: str):
-    """Scrape website, extract information, links, and images using Playwright."""
+    """Scrape website, extract information using Playwright and LLM."""
 
     print(f"\n\n🔎 Scraping: {url} ...\n\n")
 
@@ -100,18 +93,28 @@ def scrape_website(url: str):
 
         try:
             page.goto(url, timeout=120000)
+            
             print("✅ Browser launched\n")
-
-            page.wait_for_load_state("networkidle", timeout=30000)
+            
+            try:
+                page.wait_for_load_state("domcontentloaded", timeout=20000)
+                
+                try:
+                    page.wait_for_load_state("networkidle", timeout=20000)
+                except:
+                    print("⚠️ networkidle not reached, relying on stable DOM instead")
+                if wait_for_stable_dom(page, timeout=30, stable_time=2):
+                    print("✅ DOM stabilized")
+                    
+            except Exception as e:
+                print(f"⚠️ Playwright load issue: {e}")
+            
             print("✅ Document ready\n")
-
             auto_scroll(page, pause=1.0, max_attempts=30)
-
             if wait_for_stable_dom(page, timeout=30, stable_time=2):
                 print("✅ DOM stabilized (data loaded)\n")
             else:
                 print("⚠️ DOM may still be loading, continuing anyway\n")
-
             page_source = page.content()
 
         except Exception as e:
@@ -128,35 +131,27 @@ def scrape_website(url: str):
     # Remove noise
     for tag in soup(["script", "style", "header", "footer", "nav"]):
         tag.decompose()
-    
-    body_text = extract_text_with_images(soup)
-    
-    print(f"Body text: {body_text}\n")
-    
-    blocks = chunk_text(body_text, chunk_size=3000, overlap=200)
 
+    body_text = extract_text_with_images(soup)
+    print(f"Body text: {body_text}\n")
+
+    blocks = chunk_text(body_text, chunk_size=3000, overlap=200)
     print(f"\n✅ Body split into {len(blocks)} blocks\n")
 
     # --- Send to Ollama in batches ---
     all_results = []
     for i, block in enumerate(blocks, 1):
         print(f"🔹 Processing block {i}/{len(blocks)}")
+        print(f"\n Block: {block}\n")
         res = process_with_ollama(block)
         if res and res.get("data"):
-            all_results.extend(res["data"])
+            all_results.append(res["data"])
 
-    # Deduplicate results
-    unique = []
-    seen = set()
-    for item in all_results:
-        key = (item.get("name"), tuple(item.get("email", [])), tuple(item.get("phone", [])))
-        if key not in seen:
-            seen.add(key)
-            unique.append(item)
-
-    information = {"data": unique, "raw": all_results}
-
-    print(f"\n✅ Information received from LLM: {len(unique)} unique people\n")
+    print(f"\n\n-----------🧧 ALL RESULTS--------- \n\n {all_results}")
+    
+    # Merge results from all blocks using new LLM schema
+    information = merge_results([{"data": r} for r in all_results])
+    print(f"\n✅ Information received from LLM: {len(information['people'])} unique people\n")
 
     # --- Links Extraction ---
     base_domain = urlparse(url).netloc
@@ -177,9 +172,8 @@ def scrape_website(url: str):
 
     return {
         "url": url,
-        "title": soup.title.string.strip() if soup.title else None,
+        "title": soup.title.get_text(strip=True) if soup.title else None,
         "information": information,
         "base_links": list(set(base_links)),
         "external_links": list(set(external_links)),
     }
-
