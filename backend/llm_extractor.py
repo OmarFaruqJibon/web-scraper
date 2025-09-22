@@ -14,6 +14,7 @@ def send_to_ollama_chunk(text: str, retries: int = 1):
         - HTML content grouped into <block>...</block>.
         - Each block may describe people, organizations, products, events, services, courses, or general information.
         - Images may appear as <img src='...' alt='...'> → map these to "image" field.
+        - Links appear as <a href='...'>text</a> → if they are social media (Facebook, LinkedIn, Twitter, Instagram, YouTube, GitHub, etc.), map them to "social".
 
         Task:
         - Extract all factual data into the schema below.

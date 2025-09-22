@@ -43,18 +43,58 @@ def auto_scroll(page, pause=1.0, max_attempts=20):
 
 
 # --- Extract body text and keep <img> inline ---
-def extract_text_with_images(soup):
+# def extract_text_with_images(soup):
+#     parts = []
+#     if not soup.body:
+#         return str(soup)  
+
+#     for elem in soup.body.descendants:
+#         if elem.name == "img":
+#             parts.append(f"<img src='{elem.get('src', '')}' alt='{elem.get('alt', '')}'>")
+#         elif elem.string and elem.string.strip():
+#             parts.append(elem.string.strip())
+
+#     return " ".join(parts)
+
+
+# def extract_text_with_images(soup, base_url: str):
+#     parts = []
+#     if not soup.body:
+#         return str(soup)
+
+#     for elem in soup.body.descendants:
+#         if elem.name == "img":
+#             raw_src = elem.get("src", "")
+#             abs_src = urljoin(base_url, raw_src) if raw_src else ""
+#             parts.append(f"<img src='{abs_src}' alt='{elem.get('alt', '')}'>")
+#         elif elem.string and elem.string.strip():
+#             parts.append(elem.string.strip())
+
+#     return " ".join(parts)
+
+def extract_text_with_media(soup):
+    """
+    Extracts text but keeps <img> and <a> (for social/profile links).
+    Returns a simplified HTML-like string.
+    """
     parts = []
     if not soup.body:
-        return str(soup)  # fallback
+        return str(soup)
 
     for elem in soup.body.descendants:
         if elem.name == "img":
-            parts.append(f"<img src='{elem.get('src', '')}' alt='{elem.get('alt', '')}'>")
+            parts.append(
+                f"<img src='{elem.get('src', '')}' alt='{elem.get('alt', '')}'>"
+            )
+        elif elem.name == "a" and elem.get("href"):
+            text = elem.get_text(strip=True) or ""
+            href = elem["href"]
+            parts.append(f"<a href='{href}'>{text}</a>")
         elif elem.string and elem.string.strip():
             parts.append(elem.string.strip())
 
     return " ".join(parts)
+
 
 
 # -------- Helper: Chunking --------
@@ -127,13 +167,35 @@ def scrape_website(url: str):
     soup = BeautifulSoup(page_source, "html.parser")
     soup_for_base_url = BeautifulSoup(page_source, "html.parser")
     print("\n✅ Page parsed\n")
+        
+    # --- Links Extraction ---
+    base_domain = urlparse(url).netloc
+    base_links, external_links = [], []
+
+    for a in soup_for_base_url.find_all("a", href=True):
+        abs_link = urljoin(url, a["href"])
+        link_domain = urlparse(abs_link).netloc
+
+        if link_domain == base_domain and abs_link not in base_links:
+            base_links.append(abs_link)
+        elif (
+            link_domain != base_domain
+            and not abs_link.startswith("mailto:")
+            and not abs_link.startswith("tel:")
+        ):
+            external_links.append(abs_link)    
 
     # Remove noise
     for tag in soup(["script", "style", "header", "footer", "nav"]):
         tag.decompose()
 
-    body_text = extract_text_with_images(soup)
-    print(f"Body text: {body_text}\n")
+    # body_text = extract_text_with_images(soup, base_domain)
+    
+    body_text = extract_text_with_media(soup)
+
+    
+    
+    # print(f"Body text: {body_text}\n")
 
     blocks = chunk_text(body_text, chunk_size=3000, overlap=200)
     print(f"\n✅ Body split into {len(blocks)} blocks\n")
@@ -151,24 +213,11 @@ def scrape_website(url: str):
     
     # Merge results from all blocks using new LLM schema
     information = merge_results([{"data": r} for r in all_results])
+
+    
     print(f"\n✅ Information received from LLM: {len(information['people'])} unique people\n")
 
-    # --- Links Extraction ---
-    base_domain = urlparse(url).netloc
-    base_links, external_links = [], []
 
-    for a in soup_for_base_url.find_all("a", href=True):
-        abs_link = urljoin(url, a["href"])
-        link_domain = urlparse(abs_link).netloc
-
-        if link_domain == base_domain and abs_link not in base_links:
-            base_links.append(abs_link)
-        elif (
-            link_domain != base_domain
-            and not abs_link.startswith("mailto:")
-            and not abs_link.startswith("tel:")
-        ):
-            external_links.append(abs_link)
 
     return {
         "url": url,
