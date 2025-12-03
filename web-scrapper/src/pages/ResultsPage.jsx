@@ -15,7 +15,7 @@ const ResultsPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-// Check if we came from a scraping action
+
 useEffect(() => {
   const fromScrape = location.state?.fromScrape;
   if (fromScrape) {
@@ -23,7 +23,6 @@ useEffect(() => {
     setIsLoading(true);
     startProgressMonitoring();
   } else {
-    // Direct access to results page - just load existing data
     fetchData();
   }
 }, [location]);
@@ -53,10 +52,10 @@ const startProgressMonitoring = () => {
     }
   };
 
-  // 🔥 Fire immediately once
+  // Fire immediately once
   fetchProgress();
 
-  // ⏱️ Then repeat every 1 min
+  // Then repeat every 1 min
   interval = setInterval(fetchProgress, 60000);
 
   return () => clearInterval(interval);
@@ -110,7 +109,7 @@ const startProgressMonitoring = () => {
         </div>
       </section>
 
-      {/* Progress Indicator - Only show when coming from scraping */}
+      {/* Progress Indicator Only show when coming from scraping */}
       {showProgress && (
         <section className="py-12 px-4">
           <div className="max-w-4xl mx-auto">
@@ -166,7 +165,7 @@ const startProgressMonitoring = () => {
         </section>
       )}
 
-      {/* Results Section - Show when not loading or when we have data */}
+      {/* Results Section Show when not loading or when we have data */}
       {(!showProgress || data.length > 0) && (
         <motion.div
           initial={{ opacity: 0 }}

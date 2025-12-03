@@ -468,7 +468,7 @@ const DemoSection = ({ data, fetchData }) => {
                       </button>
                     </div>
 
-                    {/* ✅ Wrap table in a horizontal scroll container */}
+                    {/* Wrap table in a horizontal scroll container */}
                     <div className="w-full overflow-x-scroll scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-900 flex-1 border border-gray-700 rounded-lg">
                       <div className="min-w-max">
                         <table className="w-full text-xs sm:text-sm border-collapse">

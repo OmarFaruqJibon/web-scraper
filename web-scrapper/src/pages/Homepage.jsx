@@ -2,13 +2,9 @@
 import Navbar from '../components/Navbar';
 import HeroSection from '../components/HeroSection';
 import Commitment from '../components/Commitment';
-import Testimonial from '../components/Testimonial';
 import Pricing from '../components/Pricing';
 import FAQ from '../components/FAQ';
 import Footer from '../components/Footer';
-import DemoSection from "../components/DemoSection";
-import { useState, useEffect } from 'react';
-import api from "../callApi";
 
 const Homepage = () => {
 
