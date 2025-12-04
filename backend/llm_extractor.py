@@ -112,8 +112,8 @@ def send_to_ollama_chunk(text: str, retries: int = 1):
             return {"data": {k: [] if k in ["people", "products", "events"] else {} for k in required_keys}, "raw": ""}
 
 
-def deduplicate_people(people):
-    """Remove duplicates based on (name + email + phone)."""
+#Remove duplicates based on (name + email + phone).
+def deduplicate_people(people): 
     seen, unique = set(), []
     for person in people:
         key = (
@@ -127,8 +127,8 @@ def deduplicate_people(people):
     return unique
 
 
-def merge_results(results):
-    """Merge multiple chunk results into one consistent structure."""
+#Merge multiple chunk results into one consistent structure.
+def merge_results(results): 
     merged = {
         "people": [],
         "organization": [],

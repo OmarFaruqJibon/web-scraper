@@ -11,7 +11,6 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 print(GEMINI_API_KEY)
 
 def send_to_gemini(text: str, retries: int = 1):
-    """Send HTML to Gemini 2.0 Flash API for information extraction and return structured JSON."""
 
     gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
     
@@ -106,7 +105,7 @@ def send_to_gemini(text: str, retries: int = 1):
             
             print("Raw Gemini response:", raw_text)  # Debug raw response
 
-            # --- First: try direct JSON parsing ---
+            # --- try direct JSON parsing ---
             try:
                 parsed = json.loads(raw_text)
                 return {"data": parsed, "raw": raw_text}
@@ -114,7 +113,7 @@ def send_to_gemini(text: str, retries: int = 1):
                 print(f"JSON parse error: {e}")
                 pass  # fallback to regex
 
-            # --- Second: regex fallback ---
+            # --- regex fallback ---
             # Look for JSON array pattern
             json_match = re.search(r'\[\s*\{.*\}\s*\]', raw_text, re.DOTALL)
             if json_match:
@@ -124,7 +123,7 @@ def send_to_gemini(text: str, retries: int = 1):
                 except json.JSONDecodeError as e:
                     print(f"Regex JSON parse error: {e}")
             
-            # --- Third: try to find any JSON object/array ---
+            # --- try to find any JSON object/array ---
             matches = re.findall(r'(\[.*\]|\{.*\})', raw_text, re.DOTALL)
             for match in matches:
                 try:

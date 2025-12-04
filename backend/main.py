@@ -43,7 +43,7 @@ def start_crawl(data: Data, background_tasks: BackgroundTasks):
     return {"message": f"Crawling started for {data.url}"}
 
 # ==========================
-# Serve React build (Vite `dist/` folder)
+# Serve React build (Vite dist/ folder)
 # ==========================
 react_dist_dir = os.path.join(os.path.dirname(__file__), "frontend", "dist")
 

@@ -14,35 +14,33 @@ print("DeepSeek API Key loaded:", bool(DEESEEK_API_KEY))
 DEESEEK_URL = "https://openrouter.ai/api/v1"
 
 def send_to_deepseek(text: str, retries: int = 2):
-    """Send HTML/text to DeepSeek R1 API and return structured JSON safely."""
     
-    # Optional: truncate or chunk very large HTML to avoid token issues
     MAX_CHARS = 2000  # adjust based on token estimate
     text = text[:MAX_CHARS]
 
     prompt = f"""
-You are an information extraction system.
+            You are an information extraction system.
 
-The input is cleaned HTML text where <img> tags are kept.
+            The input is cleaned HTML text where <img> tags are kept.
 
-Your task:
-- Extract a list of people mentioned in the text.
-- For each person, include these fields:
-    - name (string)
-    - email (array of strings, [] if none found)
-    - phone (array of strings, [] if none found)
-    - location (string, "" if none found)
-    - image (URL from <img> tag if related to that person)
-    - description (Extract all useful information from the given text)
+            Your task:
+            - Extract a list of people mentioned in the text.
+            - For each person, include these fields:
+                - name (string)
+                - email (array of strings, [] if none found)
+                - phone (array of strings, [] if none found)
+                - location (string, "" if none found)
+                - image (URL from <img> tag if related to that person)
+                - description (Extract all useful information from the given text)
 
-Rules:
-- If a field is missing, use an empty string "" (do not skip it).
-- Only return valid JSON. Do not include explanations, notes, or text outside of the JSON.
-- Always return a JSON array, even if only one person is found.
+            Rules:
+            - If a field is missing, use an empty string "" (do not skip it).
+            - Only return valid JSON. Do not include explanations, notes, or text outside of the JSON.
+            - Always return a JSON array, even if only one person is found.
 
-HTML:
-{text}
-"""
+            HTML:
+            {text}
+            """
 
     headers = {
         "Authorization": f"Bearer {DEESEEK_API_KEY}",

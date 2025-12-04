@@ -24,7 +24,6 @@ crawl_progress = {
 
 
 def normalize_url(url: str) -> str:
-    """Strip query/hash and normalize URL."""
     parsed = urlparse(url)
     return urlunparse((
         parsed.scheme,
@@ -35,9 +34,6 @@ def normalize_url(url: str) -> str:
 
 
 def crawl_website(start_url: str, max_pages: int = 1, max_depth: int = 10):
-    """
-    Crawl a website recursively up to max_pages and max_depth.
-    """
     visited = set()
     queue = deque([(start_url, 0)])  # store (url, depth)
     count = 0

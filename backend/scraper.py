@@ -9,7 +9,6 @@ from gemini_ai import send_to_gemini
 
 # -------- Helper: DOM stabilization --------
 def wait_for_stable_dom(page, timeout=30, stable_time=2):
-    """Wait until DOM stops changing for a given stable_time (seconds)."""
     end_time = time.time() + timeout
     last_html = ""
     stable_start = None
@@ -30,7 +29,6 @@ def wait_for_stable_dom(page, timeout=30, stable_time=2):
 
 # -------- Helper: Auto-scroll for lazy-loading --------
 def auto_scroll(page, pause=1.0, max_attempts=20):
-    """Scroll to bottom to trigger lazy loading/infinite scroll."""
     last_height = page.evaluate("() => document.body.scrollHeight")
     for _ in range(max_attempts):
         page.evaluate("() => window.scrollTo(0, document.body.scrollHeight)")
@@ -73,10 +71,6 @@ def auto_scroll(page, pause=1.0, max_attempts=20):
 #     return " ".join(parts)
 
 def extract_text_with_media(soup):
-    """
-    Extracts text but keeps <img> and <a> (for social/profile links).
-    Returns a simplified HTML-like string.
-    """
     parts = []
     if not soup.body:
         return str(soup)
@@ -98,8 +92,7 @@ def extract_text_with_media(soup):
 
 
 # -------- Helper: Chunking --------
-def chunk_text(text: str, chunk_size=3000, overlap=200):
-    """Split text into overlapping chunks with <block> wrappers"""
+def chunk_text(text: str, chunk_size=5000, overlap=500):
     chunks, start = [], 0
     while start < len(text):
         end = start + chunk_size
@@ -111,7 +104,6 @@ def chunk_text(text: str, chunk_size=3000, overlap=200):
 
 # -------- Scraper Function --------
 def scrape_website(url: str):
-    """Scrape website, extract information using Playwright and LLM."""
 
     print(f"\n\n🔎 Scraping: {url} ...\n\n")
 
@@ -197,7 +189,7 @@ def scrape_website(url: str):
     
     # print(f"Body text: {body_text}\n")
 
-    blocks = chunk_text(body_text, chunk_size=3000, overlap=200)
+    blocks = chunk_text(body_text, chunk_size=5000, overlap=500)
     print(f"\n✅ Body split into {len(blocks)} blocks\n")
 
     # --- Send to Ollama in batches ---
