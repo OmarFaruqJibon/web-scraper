@@ -1,3 +1,5 @@
+// src/components/FormData.jsx
+
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, XCircle, ExternalLink, Sparkles } from "lucide-react";
@@ -8,7 +10,7 @@ const FormData = ({ onSuccess }) => {
   const [url, setUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(null);
-const navigate = useNavigate();
+  const navigate = useNavigate();
 
   useEffect(() => {
     let interval;
@@ -16,20 +18,29 @@ const navigate = useNavigate();
       interval = setInterval(async () => {
         try {
           const res = await api.get("/progress");
-          setProgress(res.data);
 
-          if (res.data.status === "finished" || res.data.status === "error") {
+          const jobs = res.data?.progress || [];
+          const latest = jobs[jobs.length - 1] || null;
+
+          setProgress(latest);
+
+          if (
+            latest &&
+            (latest.status === "finished" || latest.status === "error")
+          ) {
             clearInterval(interval);
             setIsLoading(false);
-            if (onSuccess) onSuccess(); // refresh data
+
+            // Redirect to results page when done
+            navigate("/results", { replace: true, state: { fromScrape: true } });
           }
         } catch (err) {
           console.error("Error fetching progress", err);
         }
-      }, 60000);
+      }, 3000);
     }
     return () => clearInterval(interval);
-  }, [isLoading]);
+  }, [isLoading, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -39,7 +50,8 @@ const navigate = useNavigate();
     try {
       await api.post("/crawl", { url });
       setUrl("");
-      // Redirect to results page with state indicating we came from scraping
+
+      // Navigate immediately to results page showing progress
       navigate("/results", { state: { fromScrape: true } });
     } catch (error) {
       console.error("Error starting crawl", error);
@@ -50,8 +62,8 @@ const navigate = useNavigate();
   return (
     <div className="w-full my-12">
       {/* Form */}
-      <motion.form 
-        onSubmit={handleSubmit} 
+      <motion.form
+        onSubmit={handleSubmit}
         className="flex flex-col sm:flex-row gap-4 items-center"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -67,7 +79,10 @@ const navigate = useNavigate();
             required
             disabled={isLoading}
           />
-          <Sparkles className="absolute right-4 top-1/2 transform -translate-y-1/2 text-blue-400/60" size={20} />
+          <Sparkles
+            className="absolute right-4 top-1/2 transform -translate-y-1/2 text-blue-400/60"
+            size={20}
+          />
         </div>
 
         <motion.button
@@ -108,7 +123,7 @@ const navigate = useNavigate();
       {/* Progress indicator */}
       <AnimatePresence>
         {progress && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
@@ -116,40 +131,58 @@ const navigate = useNavigate();
             className="w-xl mt-8 p-6 bg-slate-800/70 backdrop-blur-sm rounded-2xl border border-slate-700 shadow-lg glow-effect"
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-slate-100">Scraping Progress</h3>
-              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                progress.status === "finished" 
-                  ? "bg-green-900/30 text-green-400" 
-                  : progress.status === "error" 
-                  ? "bg-red-900/30 text-red-400"
-                  : "bg-blue-900/30 text-blue-400"
-              }`}>
-                {progress.status.charAt(0).toUpperCase() + progress.status.slice(1)}
+              <h3 className="text-lg font-semibold text-slate-100">
+                Scraping Progress
+              </h3>
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  progress.status === "finished"
+                    ? "bg-green-900/30 text-green-400"
+                    : progress.status === "error"
+                    ? "bg-red-900/30 text-red-400"
+                    : "bg-blue-900/30 text-blue-400"
+                }`}
+              >
+                {progress.status}
               </span>
             </div>
 
             {/* Progress bar */}
             <div className="w-full bg-slate-700 rounded-full h-2.5 mb-4">
-              <div 
-                className="h-2.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500" 
-                style={{ width: `${(progress.done / progress.total) * 100}%` }}
+              <div
+                className="h-2.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500"
+                style={{
+                  width:
+                    progress.total > 0
+                      ? `${(progress.done / progress.total) * 100}%`
+                      : `0%`,
+                }}
               ></div>
             </div>
 
             <div className="flex justify-between text-sm text-slate-400 mb-2">
-              <span>Pages processed: {progress.done}/{progress.total}</span>
-              <span>{Math.round((progress.done / progress.total) * 100)}%</span>
+              <span>
+                Pages processed: {progress.done}/{progress.total}
+              </span>
+              <span>
+                {progress.total > 0
+                  ? Math.round((progress.done / progress.total) * 100)
+                  : 0}
+                %
+              </span>
             </div>
 
             {progress.current_url && (
               <div className="flex items-center mt-4 pt-4 border-t border-slate-700">
                 <ExternalLink size={16} className="text-slate-400 mr-2" />
-                <span className="text-slate-400 text-sm truncate">Current: {progress.current_url}</span>
+                <span className="text-slate-400 text-sm truncate">
+                  Current: {progress.current_url}
+                </span>
               </div>
             )}
 
             {progress.status === "finished" && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="flex items-center mt-4 text-green-400"
@@ -160,7 +193,7 @@ const navigate = useNavigate();
             )}
 
             {progress.status === "error" && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="flex items-center mt-4 text-red-400"
@@ -174,7 +207,7 @@ const navigate = useNavigate();
       </AnimatePresence>
 
       {/* Info text */}
-      <motion.p 
+      <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.6 }}

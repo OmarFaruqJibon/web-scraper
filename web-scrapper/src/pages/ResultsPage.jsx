@@ -1,4 +1,5 @@
 // src/pages/ResultsPage.jsx
+
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -15,52 +16,60 @@ const ResultsPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Determine if we came from a scrape
+  useEffect(() => {
+    const fromScrape = location.state?.fromScrape;
 
-useEffect(() => {
-  const fromScrape = location.state?.fromScrape;
-  if (fromScrape) {
-    setShowProgress(true);
-    setIsLoading(true);
-    startProgressMonitoring();
-  } else {
-    fetchData();
-  }
-}, [location]);
+    if (fromScrape) {
+      setShowProgress(true);
+      setIsLoading(true);
+    } else {
+      fetchData();
+    }
+  }, [location]);
 
-const startProgressMonitoring = () => {
-  let interval;
+  // Start progress polling ONLY when showProgress becomes true
+  useEffect(() => {
+    if (showProgress) {
+      startProgressMonitoring();
+    }
+  }, [showProgress]);
 
-  const fetchProgress = async () => {
-    try {
-      const res = await api.get("/progress");
-      setProgress(res.data);
+  const startProgressMonitoring = () => {
+    let interval;
 
-      if (res.data.status === "finished" || res.data.status === "error") {
+    const fetchProgress = async () => {
+      try {
+        const res = await api.get("/progress");
+
+        const jobs = res.data?.progress || [];
+        const latest = jobs[jobs.length - 1] || null;
+
+        setProgress(latest);
+
+        if (
+          latest &&
+          (latest.status === "finished" || latest.status === "error")
+        ) {
+          clearInterval(interval);
+          setIsLoading(false);
+          setShowProgress(false);
+
+          fetchData();
+        }
+      } catch (err) {
+        console.error("Error fetching progress", err);
         clearInterval(interval);
         setIsLoading(false);
         setShowProgress(false);
-        fetchData(); // Refresh data when finished
-
-        // Remove the fromScrape state to prevent showing progress on refresh
-        navigate("/results", { replace: true, state: {} });
       }
-    } catch (err) {
-      console.error("Error fetching progress", err);
-      clearInterval(interval);
-      setIsLoading(false);
-      setShowProgress(false);
-    }
+    };
+
+    fetchProgress();
+    interval = setInterval(fetchProgress, 3000);
+
+    return () => clearInterval(interval);
   };
-
-  // Fire immediately once
-  fetchProgress();
-
-  // Then repeat every 1 min
-  interval = setInterval(fetchProgress, 60000);
-
-  return () => clearInterval(interval);
-};
-
 
   const fetchData = async () => {
     try {
@@ -74,19 +83,17 @@ const startProgressMonitoring = () => {
   return (
     <div className="min-h-screen bg-black text-slate-100s">
       <Navbar />
-      
-      {/* AI-Styled Header */}
+
+      {/* Header */}
       <section className="relative pt-28 pb-16 px-4 overflow-hidden bg-gradient-to-b from-black via-[#0A0A1F] to-black">
-        {/* Animated Background Elements */}
         <div className="absolute inset-0 
           bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] 
           from-blue-900/10 via-transparent to-transparent">
         </div>
-        
-        {/* Floating AI Elements */}
+
         <div className="absolute top-20 left-1/4 w-72 h-72 bg-purple-500/10 rounded-full filter blur-3xl animate-float-slow"></div>
         <div className="absolute bottom-20 right-1/4 w-64 h-64 bg-cyan-500/10 rounded-full filter blur-3xl animate-float-medium"></div>
-        
+
         <div className="max-w-7xl mx-auto relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -95,25 +102,22 @@ const startProgressMonitoring = () => {
             className="text-center"
           >
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 text-white">
-              <span className="bg-clip-text text-white">
-                {showProgress ? 'AI Processing' : 'Scraping Results'}
-              </span>
+              {showProgress ? 'AI Processing' : 'Scraping Results'}
             </h1>
-            <p className=" text-gray-300 max-w-2xl mx-auto">
-              {showProgress 
+            <p className="text-gray-300 max-w-2xl mx-auto">
+              {showProgress
                 ? 'Our AI is analyzing and extracting data from the website. This may take a few moments'
-                : 'View all your previously scraped data results'
-              }
+                : 'View all your previously scraped data results'}
             </p>
           </motion.div>
         </div>
       </section>
 
-      {/* Progress Indicator Only show when coming from scraping */}
+      {/* Progress UI */}
       {showProgress && (
         <section className="py-12 px-4">
           <div className="max-w-4xl mx-auto">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
@@ -129,20 +133,35 @@ const startProgressMonitoring = () => {
                   </div>
                 </div>
                 <h2 className="text-2xl font-bold text-white">AI Processing...</h2>
-                <p className="text-gray-400 mt-2">Our neural networks are extracting data patterns</p>
+                <p className="text-gray-400 mt-2">
+                  Our neural networks are extracting data patterns
+                </p>
               </div>
 
               {progress ? (
                 <>
                   <div className="mb-6">
                     <div className="flex justify-between text-sm text-gray-400 mb-2">
-                      <span>Processing {progress.done}/{progress.total} pages</span>
-                      <span>{Math.round((progress.done / progress.total) * 100)}%</span>
+                      <span>
+                        Processing {progress.done}/{progress.total} pages
+                      </span>
+                      <span>
+                        {progress.total > 0
+                          ? Math.round((progress.done / progress.total) * 100)
+                          : 0}
+                        %
+                      </span>
                     </div>
+
                     <div className="w-full bg-gray-800 rounded-full h-2.5">
-                      <div 
+                      <div
                         className="h-2.5 rounded-full bg-gradient-to-r from-cyan-500 to-purple-500 transition-all duration-500"
-                        style={{ width: `${(progress.done / progress.total) * 100}%` }}
+                        style={{
+                          width:
+                            progress.total > 0
+                              ? `${(progress.done / progress.total) * 100}%`
+                              : "0%",
+                        }}
                       ></div>
                     </div>
                   </div>
@@ -150,14 +169,18 @@ const startProgressMonitoring = () => {
                   {progress.current_url && (
                     <div className="text-center">
                       <p className="text-sm text-gray-400">Currently analyzing:</p>
-                      <p className="text-cyan-400 text-sm truncate mt-1">{progress.current_url}</p>
+                      <p className="text-cyan-400 text-sm truncate mt-1">
+                        {progress.current_url}
+                      </p>
                     </div>
                   )}
                 </>
               ) : (
                 <div className="text-center py-4">
                   <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
-                  <p className="text-gray-400 mt-2">Initializing scraping process...</p>
+                  <p className="text-gray-400 mt-2">
+                    Initializing scraping process...
+                  </p>
                 </div>
               )}
             </motion.div>
@@ -165,13 +188,12 @@ const startProgressMonitoring = () => {
         </section>
       )}
 
-      {/* Results Section Show when not loading or when we have data */}
+      {/* Results when progress is done */}
       {(!showProgress || data.length > 0) && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          
         >
           <DemoSection data={data} fetchData={fetchData} />
         </motion.div>

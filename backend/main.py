@@ -1,25 +1,22 @@
+# main.py
 import uvicorn
-from fastapi import FastAPI, BackgroundTasks
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-from pymongo import MongoClient
-from dotenv import load_dotenv
 import os
-
-# Import crawler
-from crawler import crawl_website, crawl_progress
-
-load_dotenv()
-
-MONGO_URI = os.getenv("MONGO_URI")
-client = MongoClient(MONGO_URI)
-db = client["scraperdb"]
-scraperdb_collection = db["data"]
+from db import get_db
+from multiprocessing import Process
+from crawler import start_async_crawl
 
 class Data(BaseModel):
     url: str
+    max_pages: int = 1
+    max_depth: int = 10
 
 app = FastAPI()
+
+db = get_db()
+progress_collection = db["progress"]
 
 # ==========================
 # API ROUTES
@@ -30,17 +27,26 @@ def get_root():
 
 @app.get("/api/data")
 def get_data():
-    datas = list(scraperdb_collection.find({}, {"_id": 0}))
+    datas = list(db["data"].find({}, {"_id": 0}))
     return {"dataCollections": datas}
 
 @app.get("/api/progress")
 def get_progress():
-    return crawl_progress
+    """
+    Returns all active/finished job progress documents.
+    Kept generic to avoid changing the original endpoint contract.
+    """
+    docs = list(progress_collection.find({}, {"_id": 0}))
+    return {"progress": docs}
 
 @app.post("/api/crawl")
-def start_crawl(data: Data, background_tasks: BackgroundTasks):
-    background_tasks.add_task(crawl_website, data.url)
-    return {"message": f"Crawling started for {data.url}"}
+def start_crawl(data: Data):
+    """
+    Starts a crawl in a separate process and immediately returns a job id.
+    This avoids blocking the FastAPI worker while keeping your API signature similar.
+    """
+    job_id = start_async_crawl(data.url, max_pages=data.max_pages, max_depth=data.max_depth)
+    return {"message": f"Crawling started for {data.url}", "job_id": job_id}
 
 # ==========================
 # Serve React build (Vite dist/ folder)
