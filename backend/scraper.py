@@ -7,9 +7,6 @@ from llm_extractor import process_with_ollama, merge_results
 
 # -------- Helper: DOM stabilization --------
 def wait_for_stable_dom(page, timeout=15, stable_time=1.0, poll=0.4):
-    """
-    Wait for page.content() to remain identical for `stable_time` seconds, up to `timeout`.
-    """
     end_time = time.time() + timeout
     last_html = None
     stable_start = None
@@ -46,9 +43,7 @@ def auto_scroll(page, pause=1.0, max_attempts=20):
 
 
 def extract_text_with_media(soup):
-    """
-    Collect visible text and inline images/links, while attempting to skip menus, navs, headers, and hidden elements.
-    """
+    #Collect visible text and inline images/links, while attempting to skip menus, navs, headers, and hidden elements.
     parts = []
     if not soup.body:
         return str(soup)
@@ -104,11 +99,6 @@ def chunk_text(text: str, chunk_size=5000, overlap=500):
 
 # -------- Scraper Function --------
 def scrape_website(url: str, max_scrape_time: int = 120):
-    """
-    Scrape a single URL using Playwright.
-    - max_scrape_time: total seconds allowed for Playwright operations on this page (best-effort).
-    Returns a dict with url, title, information, base_links, external_links.
-    """
 
     print(f"\n\n🔎 Scraping: {url} ...\n\n")
     start_time = time.time()
@@ -213,6 +203,7 @@ def scrape_website(url: str, max_scrape_time: int = 120):
     all_results = []
     for i, block in enumerate(blocks, 1):
         print(f"🔹 Processing block {i}/{len(blocks)}")
+        print(block)
         res = process_with_ollama(block)
         if res and res.get("data"):
             all_results.append(res["data"])

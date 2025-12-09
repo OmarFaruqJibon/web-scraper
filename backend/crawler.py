@@ -21,12 +21,6 @@ MAX_QUEUE_PER_DOMAIN = int(os.getenv("MAX_QUEUE_PER_DOMAIN", "2000"))
 
 
 def normalize_url(url: str) -> str:
-    """
-    Better canonicalization:
-    - ensure scheme (default to http if missing)
-    - strip trailing slash (but keep "/" for root)
-    - remove params, query, fragment
-    """
     if not url:
         return url
     parsed = urlparse(url, scheme="http")
@@ -43,7 +37,7 @@ def is_binary_url(url: str) -> bool:
 
 
 class CrawlTask:
-    def __init__(self, start_url: str, job_id: str = None, max_pages: int = 1, max_depth: int = 10):
+    def __init__(self, start_url: str, job_id: str = None, max_pages: int = 50, max_depth: int = 100):
         self.start_url = normalize_url(start_url)
         self.start_domain = urlparse(self.start_url).netloc
         self.job_id = job_id or str(uuid.uuid4())
@@ -173,26 +167,21 @@ class CrawlTask:
             print(f"⚠️ Crawl error: {e}")
 
     @staticmethod
-    def start_async(start_url: str, max_pages: int = 1, max_depth: int = 10, job_id: str = None):
+    def start_async(start_url: str, max_pages: int = 50, max_depth: int = 100, job_id: str = None):
         task = CrawlTask(start_url=start_url, job_id=job_id, max_pages=max_pages, max_depth=max_depth)
         p = mp.Process(target=task.run, daemon=True)
         p.start()
         return task.job_id
 
 # Backwards-friendly helper functions
-def crawl_website(start_url: str, max_pages: int = 1, max_depth: int = 10, job_id: str = None):
-    """
-    Synchronous call (keeps compatibility), runs crawl in current process.
-    Prefer start_async_crawl for background runs.
-    """
+def crawl_website(start_url: str, max_pages: int = 50, max_depth: int = 100, job_id: str = None):
+    #Synchronous call (keeps compatibility), runs crawl in current process. Prefer start_async_crawl for background runs.
+
     task = CrawlTask(start_url=start_url, job_id=job_id, max_pages=max_pages, max_depth=max_depth)
     task.run()
     return task.job_id
 
-def start_async_crawl(start_url: str, max_pages: int = 1, max_depth: int = 10):
-    """
-    Starts a crawl as a separate process and returns job_id immediately.
-    Used by main.py to avoid blocking.
-    """
-    
+def start_async_crawl(start_url: str, max_pages: int = 50, max_depth: int = 100):
+    # Starts a crawl as a separate process and returns job_id immediately. Used by main.py to avoid blocking.
+
     return CrawlTask.start_async(start_url=start_url, max_pages=max_pages, max_depth=max_depth)

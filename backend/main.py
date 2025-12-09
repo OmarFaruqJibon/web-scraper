@@ -22,29 +22,29 @@ progress_collection = db["progress"]
 # API ROUTES
 # ==========================
 @app.get("/api/")
+
+
 def get_root():
     return {"Message": "Backend Server is running"}
 
 @app.get("/api/data")
+
+
 def get_data():
     datas = list(db["data"].find({}, {"_id": 0}))
     return {"dataCollections": datas}
 
 @app.get("/api/progress")
+
+
 def get_progress():
-    """
-    Returns all active/finished job progress documents.
-    Kept generic to avoid changing the original endpoint contract.
-    """
     docs = list(progress_collection.find({}, {"_id": 0}))
     return {"progress": docs}
 
 @app.post("/api/crawl")
+
+
 def start_crawl(data: Data):
-    """
-    Starts a crawl in a separate process and immediately returns a job id.
-    This avoids blocking the FastAPI worker while keeping your API signature similar.
-    """
     job_id = start_async_crawl(data.url, max_pages=data.max_pages, max_depth=data.max_depth)
     return {"message": f"Crawling started for {data.url}", "job_id": job_id}
 
@@ -52,6 +52,7 @@ def start_crawl(data: Data):
 # Serve React build (Vite dist/ folder)
 # ==========================
 react_dist_dir = os.path.join(os.path.dirname(__file__), "frontend", "dist")
+
 
 if os.path.exists(react_dist_dir):
     app.mount("/", StaticFiles(directory=react_dist_dir, html=True), name="frontend")
