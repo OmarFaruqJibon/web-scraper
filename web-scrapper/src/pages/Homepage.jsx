@@ -12,10 +12,10 @@ const Homepage = () => {
     <div className="min-h-screen bg-black text-slate-100">
       <Navbar />
       <HeroSection />
-      <Commitment />
-      <Pricing />
-      <FAQ />
-      <Footer />
+      {/* <Commitment /> */}
+      {/* <Pricing /> */}
+      {/* <FAQ /> */}
+      {/* <Footer /> */}
     </div>
   );
 };
