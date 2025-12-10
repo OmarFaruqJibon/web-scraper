@@ -1,6 +1,7 @@
 import requests
+import os
 
-SERPAPI_KEY = "5e734efbd9ea7ea3d3dd050ffdba29b926974c3b02b62c3fb82c2789203229df"
+SERPAPI_KEY = os.getenv("SERPAPI_KEY")
 
 def serpapi_search(query: str, count: int = 10):
     url = "https://serpapi.com/search"

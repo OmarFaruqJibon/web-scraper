@@ -58,15 +58,7 @@ def start_crawl(data: Data):
 
 # ==========================================
 # /api/search —
-# ==========================================
-@app.get("/api/search")
-def search_web(q: str, count: int = 10):
-    results = duckduckgo_search(q, count=count)
-    return {
-        "query": q,
-        "count": len(results),
-        "results": results
-    }
+# ========================================== 
 
 # ==========================================
 # /api/search-and-crawl

@@ -200,12 +200,12 @@ const HeroSection = ({ isLoaded, fetchData }) => {
             </motion.div> */}
 
             {/* Main Heading */}
-            <h1 className="text-5xl lg:text-6xl font-bold mb-6">
+            <h1 className="text-5xl lg:text-5xl font-bold mb-6">
               <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                Web Data
+                Unlock Structured 
               </span>
               <br />
-              <span className="text-white">Extraction Reimagined</span>
+              <span className="text-white">Insights From Any Website</span>
             </h1>
 
             {/* Subtitle */}
