@@ -119,7 +119,7 @@ const FormData = () => {
               ) : (
                 <>
                   <Search className="w-4 h-4" />
-                  Search Bing
+                  Search Anything
                 </>
               )}
             </button>
